@@ -1,25 +1,79 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
+import Courses from './pages/courses/Courses';
+import Categories from './pages/categories/Categories';
+import CreateCategory from './pages/categories/CreateCategory';
+import EditCategory from './pages/categories/EditCategory';
+import CreateCourse from './pages/courses/CreateCourse';
+import EditCourse from './pages/courses/EditCourse';
+import Login from './pages/Login';
+import ProtectedRoute from './ProtectedRoute';
+import MainLayout from './components/layouts/MainLayout';
+import Lessons from './pages/lessons/Lessons';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/home" element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Dashboard />
+            </MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/courses" element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Courses />
+            </MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/categories" element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Categories />
+            </MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/categories/create" element={
+          <ProtectedRoute>
+            <MainLayout>
+              <CreateCategory />
+            </MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/categories/edit/:id" element={
+          <ProtectedRoute>
+            <MainLayout>
+              <EditCategory />
+            </MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/courses/create" element={
+          <ProtectedRoute>
+            <MainLayout>
+              <CreateCourse />
+            </MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/courses/edit/:id" element={
+          <ProtectedRoute>
+            <MainLayout>
+              <EditCourse />
+            </MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/lessons" element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Lessons />
+            </MainLayout>
+          </ProtectedRoute>
+        } />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
