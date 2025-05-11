@@ -4,6 +4,7 @@ import { getCourseById, updateCourse } from '../../services/courseService';
 import { getCategories } from '../../services/categoryservice';
 import { uploadToCloudinary } from '../../services/cloudinaryService';
 import { Category } from '../../models/Category';
+import { CourseEditDTO } from '../../models/CourseEditDTO';
 import {
   Box,
   Button,
@@ -50,9 +51,13 @@ export default function EditCourse() {
     if (id) {
       getCourseById(Number(id))
         .then((res) => {
-          const courseData = res.data;
-          setCourse(courseData);
-          setSelectedLevel(courseData.level.idLevel);
+          const courseData: CourseEditDTO = res.data;
+          setCourse({
+            ...courseData,
+            level: { idLevel: courseData.levelId },
+            category: { idCategory: courseData.categoryId }
+          });
+          setSelectedLevel(courseData.levelId);
         })
         .catch(console.error);
     }
@@ -88,7 +93,7 @@ export default function EditCourse() {
     if (file) {
       if (fileType === 'imageProfile') {
         setImageProfile(file);
-      } else if (fileType === 'imageBanner') {
+      } else {
         setImageBanner(file);
       }
     }
@@ -106,13 +111,8 @@ export default function EditCourse() {
       let imageProfileUrl = course.imageProfile;
       let imageBannerUrl = course.imageBanner;
 
-      // Si se seleccionaron nuevas imágenes, se suben
-      if (imageProfile) {
-        imageProfileUrl = await uploadToCloudinary(imageProfile);
-      }
-      if (imageBanner) {
-        imageBannerUrl = await uploadToCloudinary(imageBanner);
-      }
+      if (imageProfile) imageProfileUrl = await uploadToCloudinary(imageProfile);
+      if (imageBanner) imageBannerUrl = await uploadToCloudinary(imageBanner);
 
       const payload: EditCoursePayload = {
         name: course.name || '',
@@ -170,7 +170,6 @@ export default function EditCourse() {
                   value={course.name || ''}
                   onChange={handleChange}
                   variant="outlined"
-                  helperText="Ingrese el nombre del curso"
                 />
                 <TextField
                   fullWidth
@@ -180,7 +179,6 @@ export default function EditCourse() {
                   value={course.authorName || ''}
                   onChange={handleChange}
                   variant="outlined"
-                  helperText="Ingrese el nombre del autor"
                 />
               </Box>
 
@@ -194,7 +192,6 @@ export default function EditCourse() {
                 value={course.description || ''}
                 onChange={handleChange}
                 variant="outlined"
-                helperText="Proporcione una descripción detallada del curso"
               />
 
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -207,7 +204,6 @@ export default function EditCourse() {
                   value={course.price || ''}
                   onChange={handleChange}
                   variant="outlined"
-                  helperText="Ingrese el precio del curso"
                 />
                 <TextField
                   fullWidth
@@ -217,7 +213,6 @@ export default function EditCourse() {
                   value={course.category?.idCategory || ''}
                   onChange={handleCategoryChange}
                   variant="outlined"
-                  helperText="Seleccione la categoría del curso"
                 >
                   {categories.map((cat) => (
                     <MenuItem key={cat.idCategory} value={cat.idCategory}>
@@ -227,56 +222,50 @@ export default function EditCourse() {
                 </TextField>
               </Box>
 
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  fullWidth
-                  required
-                  select
-                  label="Nivel"
-                  value={selectedLevel}
-                  onChange={handleLevelChange}
-                  variant="outlined"
-                  helperText="Seleccione el nivel del curso"
-                >
-                  <MenuItem value={1}>BÁSICO</MenuItem>
-                  <MenuItem value={2}>INTERMEDIO</MenuItem>
-                  <MenuItem value={3}>AVANZADO</MenuItem>
-                </TextField>
-              </Box>
+              <TextField
+                fullWidth
+                required
+                select
+                label="Nivel"
+                value={selectedLevel}
+                onChange={handleLevelChange}
+                variant="outlined"
+              >
+                <MenuItem value={1}>BASIC</MenuItem>
+                <MenuItem value={2}>INTERMEDIATE</MenuItem>
+                <MenuItem value={3}>ADVANCED</MenuItem>
+              </TextField>
 
               <Box sx={{ display: 'flex', gap: 3 }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Imagen de Perfil
-                    </Typography>
-                    {course.imageProfile && (
-                      <img src={course.imageProfile} alt="Imagen de perfil actual" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px' }} />
-                    )}
-                    <input
-                      type="file"
-                      name="imageProfile"
-                      accept="image/*"
-                      onChange={(e) => handleFileChange(e, 'imageProfile')}
-                      style={{ marginTop: 8 }}
-                    />
-                  </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Imagen de Perfil
+                  </Typography>
+                  {course.imageProfile && (
+                    <img src={course.imageProfile} alt="Imagen perfil" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px' }} />
+                  )}
+                  <input
+                    type="file"
+                    name="imageProfile"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'imageProfile')}
+                  />
+                </Box>
 
-                  {/* Imagen de Banner */}
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Imagen de Banner
-                    </Typography>
-                    {course.imageBanner && (
-                      <img src={course.imageBanner} alt="Imagen de banner actual" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px' }} />
-                    )}
-                    <input
-                      type="file"
-                      name="imageBanner"
-                      accept="image/*"
-                      onChange={(e) => handleFileChange(e, 'imageBanner')}
-                      style={{ marginTop: 8 }}
-                    />
-                  </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Imagen de Banner
+                  </Typography>
+                  {course.imageBanner && (
+                    <img src={course.imageBanner} alt="Imagen banner" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px' }} />
+                  )}
+                  <input
+                    type="file"
+                    name="imageBanner"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'imageBanner')}
+                  />
+                </Box>
               </Box>
 
               <FormControlLabel
@@ -291,22 +280,10 @@ export default function EditCourse() {
               />
 
               <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  sx={{ minWidth: 150 }}
-                >
+                <Button type="submit" variant="contained" color="primary" size="large">
                   Actualizar Curso
                 </Button>
-                <Button
-                  variant="outlined"
-                  color="inherit"
-                  size="large"
-                  onClick={() => navigate('/courses')}
-                  sx={{ minWidth: 150 }}
-                >
+                <Button variant="outlined" onClick={() => navigate('/courses')} size="large">
                   Cancelar
                 </Button>
               </Stack>

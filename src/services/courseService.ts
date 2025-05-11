@@ -1,5 +1,6 @@
 import API from './api';
 import { Course } from '../models/Course';
+import { CourseEditDTO } from '../models/CourseEditDTO'
 
 export const getCourses = () => API.get<Course[]>('/courses', {
   headers: {
@@ -7,7 +8,7 @@ export const getCourses = () => API.get<Course[]>('/courses', {
   }
 });
 
-export const getCourseById = (id: number) => API.get<Course>(`/courses/${id}`, {
+export const getCourseById = (id: number) => API.get<CourseEditDTO>(`/courses/admin/${id}`, {
   headers: {
     Authorization: `Bearer ${localStorage.getItem('token')}`
   }

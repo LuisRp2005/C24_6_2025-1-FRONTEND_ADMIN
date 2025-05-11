@@ -25,6 +25,8 @@ import {
   Category as CategoryIcon,
   Logout as LogoutIcon,
   MenuBook as MenuBookIcon,
+  Notifications as NotificationsIcon,
+  ViewModule as ModulesIcon,
   LightMode,
   DarkMode,
 } from '@mui/icons-material';
@@ -43,7 +45,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const [lastName, setLastName] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
-  const { toggleTheme } = useThemeToggle(); // ← Usamos el hook para cambiar tema
+  const { toggleTheme } = useThemeToggle();
   const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
@@ -67,8 +69,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/home' },
     { text: 'Cursos', icon: <SchoolIcon />, path: '/courses' },
+    { text: 'Modulos', icon: <ModulesIcon />, path: '/modules' },
     { text: 'Lecciones', icon: <MenuBookIcon />, path: '/lessons' },
     { text: 'Categorías', icon: <CategoryIcon />, path: '/categories' },
+    { text: 'Notificaciones', icon: <NotificationsIcon />, path: '/notification' },
   ];
 
   const drawer = (

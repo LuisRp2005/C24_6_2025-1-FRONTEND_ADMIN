@@ -33,6 +33,8 @@ export default function CreateCourse() {
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<number>(1);
+  const [imageProfilePreview, setImageProfilePreview] = useState<string | null>(null);
+  const [imageBannerPreview, setImageBannerPreview] = useState<string | null>(null);
   const [course, setCourse] = useState<Partial<CourseFormState>>({
     name: '',
     authorName: '',
@@ -42,6 +44,7 @@ export default function CreateCourse() {
     imageBanner: null,
     status: true,
     uploadDate: new Date().toISOString().split('T')[0],
+    level: { idLevel: 1 }
   });
 
   useEffect(() => {
@@ -69,20 +72,24 @@ export default function CreateCourse() {
   const handleLevelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const levelId = Number(e.target.value);
     setSelectedLevel(levelId);
+    setCourse((prev) => ({
+      ...prev,
+      level: { idLevel: levelId }
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    if (!course.category || !course.imageProfile || !course.imageBanner) {
+
+    if (!course.category || !course.level || !course.imageProfile || !course.imageBanner) {
       console.error('Faltan campos requeridos');
       return;
     }
-  
+
     try {
       const imageProfileUrl = await uploadToCloudinary(course.imageProfile);
       const imageBannerUrl = await uploadToCloudinary(course.imageBanner);
-  
+
       const payload: CreateCoursePayload = {
         name: course.name || '',
         authorName: course.authorName || '',
@@ -91,11 +98,11 @@ export default function CreateCourse() {
         imageProfile: imageProfileUrl,
         imageBanner: imageBannerUrl,
         status: course.status ?? true,
-        uploadDate: new Date().toISOString().split('T')[0],
-        level: { idLevel: selectedLevel },
+        uploadDate: course.uploadDate || new Date().toISOString().split('T')[0],
+        level: { idLevel: course.level.idLevel },
         category: { idCategory: course.category.idCategory },
       };
-  
+
       await createCourse(payload);
       navigate('/courses');
     } catch (error) {
@@ -106,14 +113,13 @@ export default function CreateCourse() {
       }
     }
   };
-  
 
   return (
     <Box sx={{ p: 3 }}>
       <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/courses')} sx={{ mb: 3 }}>
         Volver
       </Button>
-  
+
       <Card elevation={3}>
         <CardContent>
           <Typography variant="h4" component="h1" gutterBottom>
@@ -122,9 +128,9 @@ export default function CreateCourse() {
           <Typography variant="body1" color="text.secondary" paragraph>
             Complete los siguientes campos para crear un nuevo curso.
           </Typography>
-  
+
           <Divider sx={{ my: 3 }} />
-  
+
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={3}>
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -136,7 +142,6 @@ export default function CreateCourse() {
                   value={course.name}
                   onChange={handleChange}
                   variant="outlined"
-                  helperText="Ingrese el nombre del curso"
                 />
                 <TextField
                   fullWidth
@@ -146,10 +151,9 @@ export default function CreateCourse() {
                   value={course.authorName}
                   onChange={handleChange}
                   variant="outlined"
-                  helperText="Ingrese el nombre del autor"
                 />
               </Box>
-  
+
               <TextField
                 fullWidth
                 required
@@ -160,9 +164,8 @@ export default function CreateCourse() {
                 value={course.description}
                 onChange={handleChange}
                 variant="outlined"
-                helperText="Proporcione una descripción detallada del curso"
               />
-  
+
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
                   fullWidth
@@ -173,7 +176,6 @@ export default function CreateCourse() {
                   value={course.price}
                   onChange={handleChange}
                   variant="outlined"
-                  helperText="Ingrese el precio del curso"
                 />
                 <TextField
                   fullWidth
@@ -183,7 +185,6 @@ export default function CreateCourse() {
                   value={course.category?.idCategory || ''}
                   onChange={handleCategoryChange}
                   variant="outlined"
-                  helperText="Seleccione la categoría del curso"
                 >
                   {categories.map((cat) => (
                     <MenuItem key={cat.idCategory} value={cat.idCategory}>
@@ -192,62 +193,69 @@ export default function CreateCourse() {
                   ))}
                 </TextField>
               </Box>
-  
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  fullWidth
-                  required
-                  select
-                  label="Nivel"
-                  value={selectedLevel}
-                  onChange={handleLevelChange}
-                  variant="outlined"
-                  helperText="Seleccione el nivel del curso"
-                >
-                  <MenuItem value={1}>BÁSICO</MenuItem>
-                  <MenuItem value={2}>INTERMEDIO</MenuItem>
-                  <MenuItem value={3}>AVANZADO</MenuItem>
-                </TextField>
-              </Box>
-  
-              {/* Imagen de Banner */}
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                {/* Imagen de Perfil */}
+
+              <TextField
+                fullWidth
+                required
+                select
+                label="Nivel"
+                value={selectedLevel || ''}
+                onChange={handleLevelChange}
+                variant="outlined"
+              >
+                <MenuItem value={1}>BASIC</MenuItem>
+                <MenuItem value={2}>INTERMEDIATE</MenuItem>
+                <MenuItem value={3}>ADVANCED</MenuItem>
+              </TextField>
+
+              <Box sx={{ display: 'flex', gap: 3 }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Imagen de Perfil
-                  </Typography>
+                  <Typography variant="body2" color="text.secondary">Imagen de Perfil</Typography>
+                  {imageProfilePreview && (
+                    <img
+                      src={imageProfilePreview}
+                      alt="Preview perfil"
+                      style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px' }}
+                    />
+                  )}
                   <input
                     required
                     type="file"
-                    name="imageProfile"
                     accept="image/*"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) setCourse((prev) => ({ ...prev, imageProfile: file }));
+                      if (file) {
+                        setCourse((prev) => ({ ...prev, imageProfile: file }));
+                        setImageProfilePreview(URL.createObjectURL(file));
+                      }
                     }}
                   />
                 </Box>
 
-                {/* Imagen de Banner */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Imagen de Banner
-                  </Typography>
+                  <Typography variant="body2" color="text.secondary">Imagen de Banner</Typography>
+                  {imageBannerPreview && (
+                    <img
+                      src={imageBannerPreview}
+                      alt="Preview banner"
+                      style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px' }}
+                    />
+                  )}
                   <input
                     required
                     type="file"
-                    name="imageBanner"
                     accept="image/*"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) setCourse((prev) => ({ ...prev, imageBanner: file }));
+                      if (file) {
+                        setCourse((prev) => ({ ...prev, imageBanner: file }));
+                        setImageBannerPreview(URL.createObjectURL(file));
+                      }
                     }}
                   />
                 </Box>
               </Box>
 
-  
               <FormControlLabel
                 control={
                   <Checkbox
@@ -258,12 +266,12 @@ export default function CreateCourse() {
                 }
                 label="Curso Activo"
               />
-  
+
               <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
-                <Button type="submit" variant="contained" color="primary" size="large" sx={{ minWidth: 150 }}>
+                <Button type="submit" variant="contained" color="primary" size="large">
                   Crear Curso
                 </Button>
-                <Button variant="outlined" color="inherit" size="large" onClick={() => navigate('/courses')} sx={{ minWidth: 150 }}>
+                <Button variant="outlined" color="inherit" size="large" onClick={() => navigate('/courses')}>
                   Cancelar
                 </Button>
               </Stack>
@@ -274,4 +282,3 @@ export default function CreateCourse() {
     </Box>
   );
 }
-  

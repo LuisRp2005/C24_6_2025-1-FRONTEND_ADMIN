@@ -15,21 +15,22 @@ import {
   Paper,
   IconButton,
   Stack,
+  Avatar,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
-import { getLessons } from '../../services/lessonService';
-import { getCourses } from '../../services/courseService';
+import { deleteLesson, getLessons } from '../../services/lessonService';
+import { getModule } from '../../services/moduleService';
 import { Lesson } from '../../models/Lesson';
-import { Course } from '../../models/Course';
+import { Module } from '../../models/Module';
 
 export default function Lessons() {
   const navigate = useNavigate();
   const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
 
   useEffect(() => {
     loadLessons();
-    loadCourses();
+    loadModules();
   }, []);
 
   const loadLessons = async () => {
@@ -41,12 +42,12 @@ export default function Lessons() {
     }
   };
 
-  const loadCourses = async () => {
+  const loadModules = async () => {
     try {
-      const response = await getCourses();
-      setCourses(response.data);
+      const response = await getModule();
+      setModules(response.data);
     } catch (error) {
-      console.error('Error cargando cursos:', error);
+      console.error('Error cargando módulos:', error);
     }
   };
 
@@ -57,7 +58,7 @@ export default function Lessons() {
   const handleDelete = async (id: number) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar esta lección?')) {
       try {
-        // await deleteLesson(id);
+        await deleteLesson(id);
         await loadLessons();
       } catch (error) {
         console.error('Error eliminando lección:', error);
@@ -65,9 +66,9 @@ export default function Lessons() {
     }
   };
 
-  const getCourseName = (idCourse: number): string => {
-    const course = courses.find((c) => c.idCourse === idCourse);
-    return course ? course.name : 'Curso no encontrado';
+  const getModuleName = (idModule: number): string => {
+    const module = modules.find((m) => m.idModule === idModule);
+    return module ? module.name : 'Módulo no encontrado';
   };
 
   return (
@@ -91,20 +92,29 @@ export default function Lessons() {
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableCell>Imagen</TableCell>
                   <TableCell>Título</TableCell>
                   <TableCell>Descripción</TableCell>
                   <TableCell>Duración</TableCell>
-                  <TableCell>Curso</TableCell>
+                  <TableCell>Módulo</TableCell>
                   <TableCell>Acciones</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {lessons.map((lesson) => (
                   <TableRow key={lesson.idLesson}>
+                    <TableCell>
+                      <Avatar
+                        variant="rounded"
+                        src={lesson.imageLesson}
+                        alt={lesson.title}
+                        sx={{ width: 56, height: 56 }}
+                      />
+                    </TableCell>
                     <TableCell>{lesson.title}</TableCell>
                     <TableCell>{lesson.description}</TableCell>
-                    <TableCell>{lesson.duration} minutos</TableCell>
-                    <TableCell>{getCourseName(lesson.idCourse)}</TableCell>
+                    <TableCell>{lesson.duration}</TableCell>
+                    <TableCell>{getModuleName(lesson.idModule)}</TableCell>
                     <TableCell>
                       <IconButton onClick={() => handleEdit(lesson.idLesson)} color="primary">
                         <EditIcon />

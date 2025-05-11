@@ -25,4 +25,5 @@ export interface User {
   verificationCodeExpiration?: string; // ISO Date string
   isVisible: boolean;
   role: Role;
+  fullName: string;
 }

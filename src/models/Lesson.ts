@@ -1,4 +1,4 @@
-import { Course } from './Course';
+import { Module } from './Module';
 import { LessonProgress } from './LessonProgress';
 
 export interface Lesson {
@@ -7,10 +7,11 @@ export interface Lesson {
   title: string;
   description: string;
   urlVideo: string;
-  duration: string; // Time in string format (HH:mm:ss)
-  uploadDate: string; // ISO Date string
   pdfUrl: string;
-  idCourse: number;
-  course: Course;
+  duration: string;
+  uploadDate: string;
+  idModule: number;
+  lessonOrder: number;
+  module: Module;
   lessonProgresses: LessonProgress[];
 }

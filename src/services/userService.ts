@@ -28,3 +28,7 @@ export const getCurrentUserIdAndRole = () => {
     }
   });
 };
+
+export const getUsers = () => {
+  return API.get<User[]>('/users');
+};

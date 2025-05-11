@@ -1,5 +1,5 @@
 export enum LevelEnum {
-    BEGINNER = "BEGINNER",
+    BASIC = "BASIC",
     INTERMEDIATE = "INTERMEDIATE",
     ADVANCED = "ADVANCED",
   }
