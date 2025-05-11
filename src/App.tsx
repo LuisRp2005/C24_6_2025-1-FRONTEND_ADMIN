@@ -94,21 +94,21 @@ function App() {
             </MainLayout>
           </ProtectedRoute>
         } />
-        <Route path="/notification" element={
+        <Route path="/notifications" element={
           <ProtectedRoute>
             <MainLayout>
               <Notification />
             </MainLayout>
           </ProtectedRoute>
         } />
-        <Route path="/notification/create" element={
+        <Route path="/notifications/create" element={
           <ProtectedRoute>
             <MainLayout>
               <CreateNotification />
             </MainLayout>
           </ProtectedRoute>
         } />
-        <Route path="/notification/edit/:id" element={
+        <Route path="/notifications/edit/:id" element={
           <ProtectedRoute>
             <MainLayout>
               <EditNotification />

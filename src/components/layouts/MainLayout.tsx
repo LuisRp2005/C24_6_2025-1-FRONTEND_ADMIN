@@ -31,8 +31,8 @@ import {
   DarkMode,
 } from '@mui/icons-material';
 import API from '../../services/api';
-import { useThemeToggle } from '../../theme/ThemeContext'; // ← Importar el hook para cambiar tema
-import logo from '../../assets/images/logo_edustream.png'; // <-- Importa la imagen
+import { useThemeToggle } from '../../theme/ThemeContext';
+import logo from '../../assets/images/logo_edustream.png'; 
 
 const drawerWidth = 240;
 
@@ -72,7 +72,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     { text: 'Modulos', icon: <ModulesIcon />, path: '/modules' },
     { text: 'Lecciones', icon: <MenuBookIcon />, path: '/lessons' },
     { text: 'Categorías', icon: <CategoryIcon />, path: '/categories' },
-    { text: 'Notificaciones', icon: <NotificationsIcon />, path: '/notification' },
+    { text: 'Notificaciones', icon: <NotificationsIcon />, path: '/notifications' },
   ];
 
   const drawer = (
