@@ -71,7 +71,7 @@ import {
   
     return (
       <Box sx={{ p: 3 }}>
-        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/notification')} sx={{ mb: 3 }}>
+        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/notifications')} sx={{ mb: 3 }}>
           Volver
         </Button>
   

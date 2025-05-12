@@ -32,7 +32,7 @@ import {
 } from '@mui/icons-material';
 import API from '../../services/api';
 import { useThemeToggle } from '../../theme/ThemeContext';
-import logo from '../../assets/images/logo_edustream.png'; 
+import logo from '../../assets/images/logo_codigo.png'; 
 
 const drawerWidth = 240;
 
@@ -79,7 +79,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     <div>
       <Toolbar>
         {/* Aquí se reemplaza el texto por la imagen */}
-        <Box component="img" src={logo} alt="Logo" sx={{ width: 80, height: 80 }} />
+        <Box component="img" src={logo} alt="Logo" sx={{ width: 150, height: 50 }} />
       </Toolbar>
       <Divider />
       <List>

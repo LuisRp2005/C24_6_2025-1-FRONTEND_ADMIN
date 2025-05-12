@@ -38,7 +38,7 @@ export default function Notifications() {
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/notification/edit/${id}`);
+    navigate(`/notifications/edit/${id}`);
   };
 
   const handleDelete = async (id: number) => {
@@ -61,7 +61,7 @@ export default function Notifications() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => navigate('/notification/create')}
+          onClick={() => navigate('/notifications/create')}
         >
           Nueva Notificación
         </Button>
