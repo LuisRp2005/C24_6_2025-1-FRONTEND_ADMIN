@@ -14,3 +14,11 @@ export const getPdfUrls = (courseName: string) =>
   API.get<string[]>(`/lessons/pdf_urls?course=${courseName}`);
 
 export const getLessonById = (id: number) => API.get<LessonRequest>(`/lessons/find/${id}`);
+
+export const getVideoDuration = (videoFile: File) => {
+  const formData = new FormData();
+  formData.append('file', videoFile);
+  return API.post<string>('/lessons/duration', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};

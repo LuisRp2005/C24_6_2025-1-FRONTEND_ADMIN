@@ -14,9 +14,8 @@ import {
   createTheme,
   ThemeProvider,
 } from '@mui/material';
-import logo from '../assets/images/logo_codigo.png'; // Asegúrate de tener esta ruta bien definida
+import logo from '../assets/images/logo_codigo.png';
 
-// 🎨 Tema personalizado con los colores de CodiGO
 const theme = createTheme({
   palette: {
     primary: {
@@ -73,7 +72,7 @@ export default function Login() {
     setError('');
 
     try {
-      const response = await axios.post('https://edustream-backend-vwut.onrender.com/auth/login', {
+      const response = await axios.post('http://localhost:4000/auth/login', {
         email,
         password,
       });

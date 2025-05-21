@@ -12,9 +12,11 @@ import {
   Divider,
   CircularProgress
 } from '@mui/material';
-import { getModule } from '../../services/moduleService';
-import { createLesson } from '../../services/lessonService';
+import { getCourses } from '../../services/courseService';
+import { getModulesByCourseId } from '../../services/moduleService';
+import { createLesson, getVideoDuration } from '../../services/lessonService';
 import { uploadToCloudinary } from '../../services/cloudinaryService';
+import { Course } from '../../models/Course';
 import { Module } from '../../models/Module';
 import { AxiosError } from 'axios';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
@@ -33,12 +35,17 @@ interface CreateLessonPayload {
 
 export default function CreateLesson() {
   const navigate = useNavigate();
+
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [detectingDuration, setDetectingDuration] = useState(false);
+
   const [lesson, setLesson] = useState<Partial<CreateLessonPayload>>({
     title: '',
     description: '',
@@ -49,10 +56,17 @@ export default function CreateLesson() {
   });
 
   useEffect(() => {
-    getModule()
-      .then((res) => setModules(res.data))
+    getCourses()
+      .then((res) => setCourses(res.data))
       .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (!selectedCourseId) return;
+    getModulesByCourseId(selectedCourseId)
+      .then((res) => setModules(res.data))
+      .catch(console.error);
+  }, [selectedCourseId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -87,7 +101,7 @@ export default function CreateLesson() {
         duration: lesson.duration || '00:00:00',
         uploadDate: new Date().toISOString(),
         idModule: Number(lesson.idModule),
-        lessonOrder: lesson.lessonOrder !== undefined ? lesson.lessonOrder : 1
+        lessonOrder: lesson.lessonOrder ?? 1
       };
 
       await createLesson(payload);
@@ -125,9 +139,31 @@ export default function CreateLesson() {
             <Box component="form" onSubmit={handleSubmit}>
               <Stack spacing={3}>
                 <Box sx={{ display: 'flex', gap: 2 }}>
-                  <TextField required label="Título" name="title" value={lesson.title} onChange={handleChange} fullWidth />
-                  <TextField required label="Duración (HH:MM:SS)" name="duration" value={lesson.duration} onChange={handleChange} fullWidth />
+                  <TextField
+                    required
+                    label="Título"
+                    name="title"
+                    value={lesson.title}
+                    onChange={handleChange}
+                    fullWidth
+                  />
+                  <TextField
+                    label="Duración (HH:MM:SS)"
+                    name="duration"
+                    value={lesson.duration}
+                    fullWidth
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                    disabled
+                  />
                 </Box>
+
+                {detectingDuration && (
+                  <Typography variant="body2" color="text.secondary">
+                    Detectando duración del video...
+                  </Typography>
+                )}
 
                 <TextField
                   required
@@ -154,81 +190,134 @@ export default function CreateLesson() {
                   <TextField
                     required
                     select
-                    label="Módulo"
-                    name="idModule"
-                    value={lesson.idModule || ''}
-                    onChange={(e) => setLesson({ ...lesson, idModule: Number(e.target.value) })}
+                    label="Curso"
+                    value={selectedCourseId || ''}
+                    onChange={(e) => {
+                      const courseId = Number(e.target.value);
+                      setSelectedCourseId(courseId);
+                      setModules([]);
+                      setLesson((prev) => ({ ...prev, idModule: 0 }));
+                    }}
                     fullWidth
                   >
-                    {modules.map((mod) => (
-                      <MenuItem key={mod.idModule} value={mod.idModule}>
-                        {mod.name}
+                    {courses.map((course) => (
+                      <MenuItem key={course.idCourse} value={course.idCourse}>
+                        {course.name}
                       </MenuItem>
                     ))}
                   </TextField>
+
+                  {modules.length > 0 && (
+                    <TextField
+                      required
+                      select
+                      label="Módulo"
+                      name="idModule"
+                      value={lesson.idModule || ''}
+                      onChange={(e) =>
+                        setLesson({ ...lesson, idModule: Number(e.target.value) })
+                      }
+                      fullWidth
+                    >
+                      {modules.map((mod) => (
+                        <MenuItem key={mod.idModule} value={mod.idModule}>
+                          {mod.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  )}
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                <Box sx={{ flex: 1, minWidth: 200 }}>
-                  <Typography variant="body2" color="text.secondary">Imagen de la Lección</Typography>
-                  {imagePreview && (
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      style={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: '8px' }}
+                  <Box sx={{ flex: 1, minWidth: 200 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Imagen de la Lección
+                    </Typography>
+                    {imagePreview && (
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        style={{
+                          width: '100%',
+                          maxHeight: 120,
+                          objectFit: 'cover',
+                          borderRadius: '8px'
+                        }}
+                      />
+                    )}
+                    <input
+                      required
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setImageFile(file);
+                          setImagePreview(URL.createObjectURL(file));
+                        }
+                      }}
                     />
-                  )}
-                  <input
-                    required
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setImageFile(file);
-                        setImagePreview(URL.createObjectURL(file));
-                      }
-                    }}
-                  />
+                  </Box>
+
+                  <Box sx={{ flex: 1, minWidth: 200 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Video (MP4)
+                    </Typography>
+                    <input
+                      required
+                      type="file"
+                      accept="video/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setVideoFile(file);
+                          try {
+                            setDetectingDuration(true);
+                            // Forzar nueva duración sin importar si es el mismo archivo
+                            const response = await getVideoDuration(file);
+                            setLesson((prev) => ({
+                              ...prev,
+                              duration: response.data
+                            }));
+                          } catch (err) {
+                            console.error('Error detectando duración del video', err);
+                          } finally {
+                            setDetectingDuration(false);
+                          }
+                        } else {
+                          // Si se borra el archivo
+                          setLesson((prev) => ({ ...prev, duration: '' }));
+                        }
+                      }}
+                    />
+                  </Box>
+
+                  <Box sx={{ flex: 1, minWidth: 200 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Archivo PDF
+                    </Typography>
+                    <input
+                      required
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setPdfFile(file);
+                      }}
+                    />
+                  </Box>
                 </Box>
 
-                <Box sx={{ flex: 1, minWidth: 200 }}>
-                  <Typography variant="body2" color="text.secondary">Video (MP4)</Typography>
-                  <input
-                    required
-                    type="file"
-                    accept="video/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) setVideoFile(file);
-                    }}
-                  />
-                </Box>
-
-                <Box sx={{ flex: 1, minWidth: 200 }}>
-                  <Typography variant="body2" color="text.secondary">Archivo PDF</Typography>
-                  <input
-                    required
-                    type="file"
-                    accept="application/pdf"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) setPdfFile(file);
-                    }}
-                  />
-                </Box>
-              </Box>
-
-              <Stack direction="row" spacing={2}>
-                <Button type="submit" variant="contained" color="primary">
-                  Crear Lección
-                </Button>
-                <Button variant="outlined" onClick={() => navigate('/lessons')}>
-                  Cancelar
-                </Button>
+                <Stack direction="row" spacing={2}>
+                  <Button type="submit" variant="contained" color="primary">
+                    Crear Lección
+                  </Button>
+                  <Button variant="outlined" onClick={() => navigate('/lessons')}>
+                    Cancelar
+                  </Button>
+                </Stack>
               </Stack>
-            </Stack>
-          </Box>
+            </Box>
           )}
         </CardContent>
       </Card>

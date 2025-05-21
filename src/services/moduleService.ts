@@ -11,3 +11,7 @@ export const updateModule = (id: number, data: ModuleRequest) => API.put(`/modul
 export const getModuleById = (id: number) => API.get<ModuleRequest>(`/modules/${id}`);
 
 export const deleteModule = (id: number) => API.delete(`/modules/${id}`);
+
+export const getModulesByCourseId = (idCourse: number) =>
+    API.get<Module[]>(`/modules/course/${idCourse}`);
+  

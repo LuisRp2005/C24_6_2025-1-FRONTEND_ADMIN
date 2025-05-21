@@ -20,7 +20,6 @@ export const getCurrentUserId = () => {
   });
 };
 
-// 📌 Nuevo método para obtener ID y rol
 export const getCurrentUserIdAndRole = () => {
   return API.get<UserIdAndRoleResponse>('/users/me/id', {
     headers: {

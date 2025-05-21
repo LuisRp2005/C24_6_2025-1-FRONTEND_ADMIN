@@ -1,5 +1,3 @@
-// EditLesson.tsx (actualizado con el mismo diseño que CreateLesson)
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -15,9 +13,11 @@ import {
   CircularProgress
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
-import { getModule } from '../../services/moduleService';
-import { getLessonById, updateLesson } from '../../services/lessonService';
+import { getCourses } from '../../services/courseService';
+import { getModulesByCourseId, getModuleById } from '../../services/moduleService';
+import { getLessonById, updateLesson, getVideoDuration } from '../../services/lessonService';
 import { uploadToCloudinary } from '../../services/cloudinaryService';
+import { Course } from '../../models/Course';
 import { Module } from '../../models/Module';
 import { LessonRequest } from '../../models/LessonRequest';
 import { AxiosError } from 'axios';
@@ -25,23 +25,44 @@ import { AxiosError } from 'axios';
 export default function EditLesson() {
   const navigate = useNavigate();
   const { id } = useParams();
+
+  const [courses, setCourses] = useState<Course[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+
   const [lesson, setLesson] = useState<Partial<LessonRequest>>({});
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [detectingDuration, setDetectingDuration] = useState(false);
+  const [modoEdicionModulo, setModoEdicionModulo] = useState(false);
+  const [moduloNombreActual, setModuloNombreActual] = useState('');
 
   useEffect(() => {
-    getModule().then((res) => setModules(res.data)).catch(console.error);
+    getCourses().then((res) => setCourses(res.data)).catch(console.error);
+
     if (id) {
       getLessonById(Number(id)).then((res) => {
         setLesson(res.data);
         setImagePreview(res.data.imageLesson);
+        if (res.data.idModule) {
+          getModuleById(res.data.idModule).then((mod) => {
+            setModuloNombreActual(mod.data.name);
+          });
+        }
       }).catch(console.error);
     }
   }, [id]);
+
+  useEffect(() => {
+    if (selectedCourseId) {
+      getModulesByCourseId(selectedCourseId)
+        .then((res) => setModules(res.data))
+        .catch(console.error);
+    }
+  }, [selectedCourseId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -54,6 +75,7 @@ export default function EditLesson() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!lesson.idModule || !id) return;
+
     setLoading(true);
     try {
       const imageLesson = imageFile ? await uploadToCloudinary(imageFile) : lesson.imageLesson || '';
@@ -104,27 +126,94 @@ export default function EditLesson() {
               <Stack spacing={3}>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   <TextField label="Título" name="title" value={lesson.title || ''} onChange={handleChange} fullWidth required />
-                  <TextField label="Duración (HH:MM:SS)" name="duration" value={lesson.duration || ''} onChange={handleChange} fullWidth required />
-                </Box>
-
-                <TextField label="Descripción" name="description" value={lesson.description || ''} onChange={handleChange} fullWidth multiline rows={3} required />
-
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <TextField label="Orden de la Lección" name="lessonOrder" type="number" value={lesson.lessonOrder || ''} onChange={handleChange} fullWidth required />
                   <TextField
-                    select
-                    label="Módulo"
-                    name="idModule"
-                    value={lesson.idModule || ''}
-                    onChange={(e) => setLesson({ ...lesson, idModule: Number(e.target.value) })}
+                    label="Duración (HH:MM:SS)"
+                    name="duration"
+                    value={lesson.duration || ''}
                     fullWidth
-                    required
-                  >
-                    {modules.map((mod) => (
-                      <MenuItem key={mod.idModule} value={mod.idModule}>{mod.name}</MenuItem>
-                    ))}
-                  </TextField>
+                    InputProps={{ readOnly: true }}
+                    disabled
+                  />
                 </Box>
+
+                {detectingDuration && (
+                  <Typography variant="body2" color="text.secondary">
+                    Detectando duración del video...
+                  </Typography>
+                )}
+
+                <TextField
+                  label="Descripción"
+                  name="description"
+                  value={lesson.description || ''}
+                  onChange={handleChange}
+                  fullWidth
+                  multiline
+                  rows={3}
+                  required
+                />
+
+                <TextField
+                  label="Orden de la Lección"
+                  name="lessonOrder"
+                  type="number"
+                  value={lesson.lessonOrder || ''}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                />
+
+                {!modoEdicionModulo ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                    <TextField
+                      label="Módulo actual"
+                      value={moduloNombreActual}
+                      fullWidth
+                      disabled
+                    />
+                    <Button variant="outlined" onClick={() => setModoEdicionModulo(true)}>
+                      Cambiar módulo
+                    </Button>
+                  </Box>
+                ) : (
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <TextField
+                      select
+                      label="Curso"
+                      value={selectedCourseId || ''}
+                      onChange={(e) => {
+                        const courseId = Number(e.target.value);
+                        setSelectedCourseId(courseId);
+                        setModules([]);
+                        setLesson((prev) => ({ ...prev, idModule: 0 }));
+                      }}
+                      fullWidth
+                      required
+                    >
+                      {courses.map((course) => (
+                        <MenuItem key={course.idCourse} value={course.idCourse}>
+                          {course.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+
+                    <TextField
+                      required
+                      select
+                      label="Módulo"
+                      name="idModule"
+                      value={lesson.idModule || ''}
+                      onChange={(e) => setLesson({ ...lesson, idModule: Number(e.target.value) })}
+                      fullWidth
+                    >
+                      {modules.map((mod) => (
+                        <MenuItem key={mod.idModule} value={mod.idModule}>
+                          {mod.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
+                )}
 
                 <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
                   <Box sx={{ flex: 1, minWidth: 200 }}>
@@ -144,9 +233,23 @@ export default function EditLesson() {
                     {lesson.urlVideo && (
                       <a href={lesson.urlVideo} target="_blank" rel="noopener noreferrer">Ver video</a>
                     )}
-                    <input type="file" accept="video/*" onChange={(e) => {
+                    <input type="file" accept="video/*" onChange={async (e) => {
                       const file = e.target.files?.[0];
-                      if (file) setVideoFile(file);
+                      if (file) {
+                        setVideoFile(file);
+                        try {
+                          setDetectingDuration(true);
+                          const response = await getVideoDuration(file);
+                          setLesson((prev) => ({
+                            ...prev,
+                            duration: response.data
+                          }));
+                        } catch (err) {
+                          console.error('Error detectando duración del video', err);
+                        } finally {
+                          setDetectingDuration(false);
+                        }
+                      }
                     }} />
                   </Box>
 

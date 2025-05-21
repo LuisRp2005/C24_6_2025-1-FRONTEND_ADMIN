@@ -31,3 +31,5 @@ export const deleteCourse = (id: number) => API.delete(`/courses/${id}`, {
     Authorization: `Bearer ${localStorage.getItem('token')}`
   }
 });
+
+
