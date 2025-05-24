@@ -2,7 +2,8 @@ import API from './api';
 import { Lesson } from '../models/Lesson';
 import { LessonRequest } from '../models/LessonRequest';
 
-export const getLessons = () => API.get<Lesson[]>('/lessons');
+export const getLessons = (page = 0, size = 5) =>
+  API.get(`/lessons?page=${page}&size=${size}`);
 
 export const createLesson = (data: LessonRequest) => API.post('/lessons', data);
 

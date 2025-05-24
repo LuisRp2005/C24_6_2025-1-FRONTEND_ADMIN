@@ -4,7 +4,9 @@ import { ModuleRequest } from "../models/ModuleRequest";
 
 export const createModule = (data: ModuleRequest) => API.post('/modules', data);
 
-export const getModule = () => API.get<Module[]>('/modules');
+export const getModule = (page = 0, size = 5) =>
+    API.get(`/modules?page=${page}&size=${size}`);
+  
 
 export const updateModule = (id: number, data: ModuleRequest) => API.put(`/modules/${id}`, data)
 

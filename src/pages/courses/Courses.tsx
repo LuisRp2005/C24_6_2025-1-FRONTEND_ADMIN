@@ -5,10 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   CardMedia,
-  Grid,
   IconButton,
   Paper,
   Table,
@@ -20,30 +17,37 @@ import {
   Typography,
   Chip,
   Stack,
-  Tooltip
+  Tooltip,
+  Pagination
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
 export default function Courses() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 5;
   const navigate = useNavigate();
 
+  const fetchCourses = async (page: number) => {
+    try {
+      const response = await getCourses(page, itemsPerPage);
+      setCourses(response.data.content);
+      setTotalPages(response.data.totalPages);
+      setCurrentPage(response.data.number);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await getCourses();
-        setCourses(response.data);
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-      }
-    };
-    fetchCourses();
-  }, []);
+    fetchCourses(currentPage);
+  }, [currentPage]);
 
   const handleDelete = async (id: number) => {
     try {
       await deleteCourse(id);
-      setCourses(courses.filter((course) => course.idCourse !== id));
+      fetchCourses(currentPage);
     } catch (error) {
       console.error('Error deleting course:', error);
     }
@@ -93,11 +97,11 @@ export default function Courses() {
                 <TableCell>
                   <Typography variant="subtitle1">{course.name}</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {course.description.substring(0, 50)}...
+                    {course.description?.substring(0, 50)}...
                   </Typography>
                 </TableCell>
                 <TableCell>{course.authorName}</TableCell>
-                <TableCell>${course.price}</TableCell>
+                <TableCell>s/{course.price}</TableCell>
                 <TableCell>
                   <Chip
                     label={course.level.name}
@@ -116,7 +120,7 @@ export default function Courses() {
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={course.status ? 'Active' : 'Inactive'}
+                    label={course.status ? 'Activo' : 'Inactivo'}
                     color={course.status ? 'success' : 'error'}
                     size="small"
                   />
@@ -146,6 +150,15 @@ export default function Courses() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+        <Pagination
+          count={totalPages}
+          page={currentPage + 1}
+          onChange={(e, value) => setCurrentPage(value - 1)}
+          color="primary"
+        />
+      </Box>
     </Box>
   );
 }

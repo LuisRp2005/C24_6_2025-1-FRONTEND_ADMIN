@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  TextField, Button, FormControlLabel, Checkbox, MenuItem,
+  TextField, Button, MenuItem,
   Box, Card, CardContent, Typography, Stack, Divider
 } from '@mui/material';
 import { Category } from '../../models/Category';
@@ -42,7 +42,6 @@ export default function CreateCourse() {
     price: 0,
     imageProfile: null,
     imageBanner: null,
-    status: true,
     uploadDate: new Date().toISOString().split('T')[0],
     level: { idLevel: 1 }
   });
@@ -54,10 +53,10 @@ export default function CreateCourse() {
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
     setCourse({
       ...course,
-      [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value),
+      [name]: type === 'number' ? Number(value) : value,
     });
   };
 
@@ -97,7 +96,7 @@ export default function CreateCourse() {
         price: course.price || 0,
         imageProfile: imageProfileUrl,
         imageBanner: imageBannerUrl,
-        status: course.status ?? true,
+        status: true, // siempre activo
         uploadDate: course.uploadDate || new Date().toISOString().split('T')[0],
         level: { idLevel: course.level.idLevel },
         category: { idCategory: course.category.idCategory },
@@ -209,6 +208,7 @@ export default function CreateCourse() {
               </TextField>
 
               <Box sx={{ display: 'flex', gap: 3 }}>
+                {/* Imagen de Perfil */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                   <Typography variant="body2" color="text.secondary">Imagen de Perfil</Typography>
                   {imageProfilePreview && (
@@ -218,20 +218,27 @@ export default function CreateCourse() {
                       style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px' }}
                     />
                   )}
-                  <input
-                    required
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setCourse((prev) => ({ ...prev, imageProfile: file }));
-                        setImageProfilePreview(URL.createObjectURL(file));
-                      }
-                    }}
-                  />
+                  <label htmlFor="upload-profile">
+                    <input
+                      id="upload-profile"
+                      hidden
+                      accept="image/*"
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setCourse((prev) => ({ ...prev, imageProfile: file }));
+                          setImageProfilePreview(URL.createObjectURL(file));
+                        }
+                      }}
+                    />
+                    <Button variant="outlined" component="span">
+                      Subir Imagen
+                    </Button>
+                  </label>
                 </Box>
 
+                {/* Imagen de Banner */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                   <Typography variant="body2" color="text.secondary">Imagen de Banner</Typography>
                   {imageBannerPreview && (
@@ -241,31 +248,26 @@ export default function CreateCourse() {
                       style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px' }}
                     />
                   )}
-                  <input
-                    required
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setCourse((prev) => ({ ...prev, imageBanner: file }));
-                        setImageBannerPreview(URL.createObjectURL(file));
-                      }
-                    }}
-                  />
+                  <label htmlFor="upload-banner">
+                    <input
+                      id="upload-banner"
+                      hidden
+                      accept="image/*"
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setCourse((prev) => ({ ...prev, imageBanner: file }));
+                          setImageBannerPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                    />
+                    <Button variant="outlined" component="span">
+                      Subir Imagen
+                    </Button>
+                  </label>
                 </Box>
               </Box>
-
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={course.status ?? true}
-                    onChange={handleChange}
-                    name="status"
-                  />
-                }
-                label="Curso Activo"
-              />
 
               <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
                 <Button type="submit" variant="contained" color="primary" size="large">

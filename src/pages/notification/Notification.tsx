@@ -15,6 +15,7 @@ import {
   Paper,
   IconButton,
   Stack,
+  Pagination,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { getNotifications, deleteNotification } from '../../services/notificacionService';
@@ -23,15 +24,20 @@ import { Notification } from '../../models/Notification';
 export default function Notifications() {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 5;
 
   useEffect(() => {
-    loadNotifications();
-  }, []);
+    loadNotifications(currentPage);
+  }, [currentPage]);
 
-  const loadNotifications = async () => {
+  const loadNotifications = async (page: number) => {
     try {
-      const response = await getNotifications();
-      setNotifications(response.data);
+      const response = await getNotifications(page, itemsPerPage);
+      setNotifications(response.data.content);
+      setTotalPages(response.data.totalPages);
+      setCurrentPage(response.data.number);
     } catch (error) {
       console.error('Error cargando notificaciones:', error);
     }
@@ -45,7 +51,7 @@ export default function Notifications() {
     if (window.confirm('¿Estás seguro de que deseas eliminar esta notificación?')) {
       try {
         await deleteNotification(id);
-        await loadNotifications();
+        await loadNotifications(currentPage);
       } catch (error) {
         console.error('Error eliminando notificación:', error);
       }
@@ -98,6 +104,15 @@ export default function Notifications() {
               </TableBody>
             </Table>
           </TableContainer>
+
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <Pagination
+              count={totalPages}
+              page={currentPage + 1}
+              onChange={(e, value) => setCurrentPage(value - 1)}
+              color="primary"
+            />
+          </Box>
         </CardContent>
       </Card>
     </Box>

@@ -138,26 +138,27 @@ export default function CreateLesson() {
           ) : (
             <Box component="form" onSubmit={handleSubmit}>
               <Stack spacing={3}>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <TextField
-                    required
-                    label="Título"
-                    name="title"
-                    value={lesson.title}
-                    onChange={handleChange}
-                    fullWidth
-                  />
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  required
+                  label="Título"
+                  name="title"
+                  value={lesson.title}
+                  onChange={handleChange}
+                  fullWidth
+                />
+                {lesson.duration && (
                   <TextField
                     label="Duración (HH:MM:SS)"
                     name="duration"
                     value={lesson.duration}
                     fullWidth
-                    InputProps={{
-                      readOnly: true,
-                    }}
+                    InputProps={{ readOnly: true }}
                     disabled
                   />
-                </Box>
+                )}
+              </Box>
+
 
                 {detectingDuration && (
                   <Typography variant="body2" color="text.secondary">
@@ -186,7 +187,6 @@ export default function CreateLesson() {
                     onChange={handleChange}
                     fullWidth
                   />
-
                   <TextField
                     required
                     select
@@ -229,6 +229,7 @@ export default function CreateLesson() {
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                  {/* Imagen */}
                   <Box sx={{ flex: 1, minWidth: 200 }}>
                     <Typography variant="body2" color="text.secondary">
                       Imagen de la Lección
@@ -245,66 +246,87 @@ export default function CreateLesson() {
                         }}
                       />
                     )}
-                    <input
-                      required
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setImageFile(file);
-                          setImagePreview(URL.createObjectURL(file));
-                        }
-                      }}
-                    />
+                    <label htmlFor="upload-image">
+                      <input
+                        id="upload-image"
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        required
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setImageFile(file);
+                            setImagePreview(URL.createObjectURL(file));
+                          }
+                        }}
+                      />
+                      <Button variant="outlined" component="span">
+                        Subir Imagen
+                      </Button>
+                    </label>
                   </Box>
 
+                  {/* Video */}
                   <Box sx={{ flex: 1, minWidth: 200 }}>
                     <Typography variant="body2" color="text.secondary">
                       Video (MP4)
                     </Typography>
-                    <input
-                      required
-                      type="file"
-                      accept="video/*"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setVideoFile(file);
-                          try {
-                            setDetectingDuration(true);
-                            // Forzar nueva duración sin importar si es el mismo archivo
-                            const response = await getVideoDuration(file);
-                            setLesson((prev) => ({
-                              ...prev,
-                              duration: response.data
-                            }));
-                          } catch (err) {
-                            console.error('Error detectando duración del video', err);
-                          } finally {
-                            setDetectingDuration(false);
+                    <label htmlFor="upload-video">
+                      <input
+                        id="upload-video"
+                        type="file"
+                        accept="video/*"
+                        hidden
+                        required
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setVideoFile(file);
+                            try {
+                              setDetectingDuration(true);
+                              const response = await getVideoDuration(file);
+                              setLesson((prev) => ({
+                                ...prev,
+                                duration: response.data
+                              }));
+                            } catch (err) {
+                              console.error('Error detectando duración del video', err);
+                            } finally {
+                              setDetectingDuration(false);
+                            }
+                          } else {
+                            setLesson((prev) => ({ ...prev, duration: '' }));
                           }
-                        } else {
-                          // Si se borra el archivo
-                          setLesson((prev) => ({ ...prev, duration: '' }));
-                        }
-                      }}
-                    />
+                        }}
+                      />
+                      <Button variant="outlined" component="span">
+                        Subir Video
+                      </Button>
+                    </label>
                   </Box>
 
+                  {/* PDF */}
                   <Box sx={{ flex: 1, minWidth: 200 }}>
                     <Typography variant="body2" color="text.secondary">
                       Archivo PDF
                     </Typography>
-                    <input
-                      required
-                      type="file"
-                      accept="application/pdf"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) setPdfFile(file);
-                      }}
-                    />
+                    <label htmlFor="upload-pdf">
+                      <input
+                        id="upload-pdf"
+                        type="file"
+                        accept="application/pdf"
+                        hidden
+                        required
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) setPdfFile(file);
+                        }}
+                      />
+                      <Button variant="outlined" component="span">
+                        Subir PDF
+                      </Button>
+                    </label>
                   </Box>
                 </Box>
 

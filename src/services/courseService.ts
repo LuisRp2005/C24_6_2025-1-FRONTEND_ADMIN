@@ -2,11 +2,12 @@ import API from './api';
 import { Course } from '../models/Course';
 import { CourseEditDTO } from '../models/CourseEditDTO'
 
-export const getCourses = () => API.get<Course[]>('/courses', {
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem('token')}`
-  }
-});
+export const getCourses = (page = 0, size = 5) =>
+  API.get(`/courses?page=${page}&size=${size}`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`
+    }
+  });
 
 export const getCourseById = (id: number) => API.get<CourseEditDTO>(`/courses/admin/${id}`, {
   headers: {
@@ -31,5 +32,7 @@ export const deleteCourse = (id: number) => API.delete(`/courses/${id}`, {
     Authorization: `Bearer ${localStorage.getItem('token')}`
   }
 });
+
+
 
 

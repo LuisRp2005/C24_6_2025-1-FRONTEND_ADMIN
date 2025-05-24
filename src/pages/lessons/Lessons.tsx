@@ -16,6 +16,7 @@ import {
   IconButton,
   Stack,
   Avatar,
+  Pagination,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { deleteLesson, getLessons } from '../../services/lessonService';
@@ -27,16 +28,21 @@ export default function Lessons() {
   const navigate = useNavigate();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 5;
 
   useEffect(() => {
-    loadLessons();
+    loadLessons(currentPage);
     loadModules();
-  }, []);
+  }, [currentPage]);
 
-  const loadLessons = async () => {
+  const loadLessons = async (page: number) => {
     try {
-      const response = await getLessons();
-      setLessons(response.data);
+      const response = await getLessons(page, itemsPerPage);
+      setLessons(response.data.content);
+      setTotalPages(response.data.totalPages);
+      setCurrentPage(response.data.number);
     } catch (error) {
       console.error('Error cargando lecciones:', error);
     }
@@ -59,7 +65,7 @@ export default function Lessons() {
     if (window.confirm('¿Estás seguro de que deseas eliminar esta lección?')) {
       try {
         await deleteLesson(id);
-        await loadLessons();
+        await loadLessons(currentPage);
       } catch (error) {
         console.error('Error eliminando lección:', error);
       }
@@ -67,6 +73,7 @@ export default function Lessons() {
   };
 
   const getModuleName = (idModule: number): string => {
+    if (!Array.isArray(modules)) return 'Cargando...';
     const module = modules.find((m) => m.idModule === idModule);
     return module ? module.name : 'Módulo no encontrado';
   };
@@ -128,6 +135,15 @@ export default function Lessons() {
               </TableBody>
             </Table>
           </TableContainer>
+
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <Pagination
+              count={totalPages}
+              page={currentPage + 1}
+              onChange={(e, value) => setCurrentPage(value - 1)}
+              color="primary"
+            />
+          </Box>
         </CardContent>
       </Card>
     </Box>

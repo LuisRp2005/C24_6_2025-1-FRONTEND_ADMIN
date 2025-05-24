@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
   Avatar,
@@ -32,7 +32,7 @@ import {
 } from '@mui/icons-material';
 import API from '../../services/api';
 import { useThemeToggle } from '../../theme/ThemeContext';
-import logo from '../../assets/images/logo_codigo.png'; 
+import logo from '../../assets/images/logo_codigo.png';
 
 const drawerWidth = 240;
 
@@ -47,6 +47,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const theme = useTheme();
   const { toggleTheme } = useThemeToggle();
   const navigate = useNavigate();
+  const location = useLocation(); // Para resaltar el menú activo
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -78,7 +79,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const drawer = (
     <div>
       <Toolbar>
-        {/* Aquí se reemplaza el texto por la imagen */}
         <Box component="img" src={logo} alt="Logo" sx={{ width: 150, height: 50 }} />
       </Toolbar>
       <Divider />
@@ -86,6 +86,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
+              selected={location.pathname === item.path}
               onClick={() => {
                 navigate(item.path);
                 setMobileOpen(false);
@@ -101,6 +102,15 @@ export default function MainLayout({ children }: MainLayoutProps) {
             onClick={() => {
               localStorage.removeItem('token');
               navigate('/');
+            }}
+            sx={{
+              '&:hover': {
+                backgroundColor: '#ffe5e5',
+                color: '#d32f2f',
+                '& .MuiListItemIcon-root': {
+                  color: '#d32f2f',
+                },
+              },
             }}
           >
             <ListItemIcon>
@@ -148,7 +158,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <Typography variant="subtitle1" noWrap>
               {`${name} ${lastName}`}
             </Typography>
-            {/* Botón de cambio de tema */}
             <Tooltip title="Cambiar Tema">
               <IconButton color="inherit" onClick={toggleTheme}>
                 {theme.palette.mode === 'dark' ? <LightMode /> : <DarkMode />}
@@ -158,10 +167,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </Toolbar>
       </AppBar>
 
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-      >
+      <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -169,10 +175,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-            },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
           }}
         >
           {drawer}
@@ -181,10 +184,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           variant="permanent"
           sx={{
             display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-            },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
           }}
           open
         >

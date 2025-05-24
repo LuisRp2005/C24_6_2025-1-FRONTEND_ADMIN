@@ -14,8 +14,6 @@ import {
   Typography,
   Stack,
   Divider,
-  FormControlLabel,
-  Checkbox,
   MenuItem,
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
@@ -55,7 +53,7 @@ export default function EditCourse() {
           setCourse({
             ...courseData,
             level: { idLevel: courseData.levelId },
-            category: { idCategory: courseData.categoryId }
+            category: { idCategory: courseData.categoryId },
           });
           setSelectedLevel(courseData.levelId);
         })
@@ -64,10 +62,10 @@ export default function EditCourse() {
   }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
     setCourse({
       ...course,
-      [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value),
+      [name]: type === 'number' ? Number(value) : value,
     });
   };
 
@@ -93,8 +91,10 @@ export default function EditCourse() {
     if (file) {
       if (fileType === 'imageProfile') {
         setImageProfile(file);
+        setCourse((prev) => ({ ...prev, imageProfile: URL.createObjectURL(file) }));
       } else {
         setImageBanner(file);
+        setCourse((prev) => ({ ...prev, imageBanner: URL.createObjectURL(file) }));
       }
     }
   };
@@ -121,7 +121,7 @@ export default function EditCourse() {
         price: course.price || 0,
         imageProfile: imageProfileUrl || '',
         imageBanner: imageBannerUrl || '',
-        status: course.status ?? true,
+        status: true,
         uploadDate: course.uploadDate || new Date().toISOString().split('T')[0],
         level: { idLevel: selectedLevel },
         category: { idCategory: course.category.idCategory },
@@ -140,17 +140,13 @@ export default function EditCourse() {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Button
-        startIcon={<ArrowBackIcon />}
-        onClick={() => navigate('/courses')}
-        sx={{ mb: 3 }}
-      >
+      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/courses')} sx={{ mb: 3 }}>
         Volver
       </Button>
 
       <Card elevation={3}>
         <CardContent>
-          <Typography variant="h4" component="h1" gutterBottom>
+          <Typography variant="h4" gutterBottom>
             Editar Curso
           </Typography>
           <Typography variant="body1" color="text.secondary" paragraph>
@@ -169,7 +165,6 @@ export default function EditCourse() {
                   name="name"
                   value={course.name || ''}
                   onChange={handleChange}
-                  variant="outlined"
                 />
                 <TextField
                   fullWidth
@@ -178,7 +173,6 @@ export default function EditCourse() {
                   name="authorName"
                   value={course.authorName || ''}
                   onChange={handleChange}
-                  variant="outlined"
                 />
               </Box>
 
@@ -191,7 +185,6 @@ export default function EditCourse() {
                 name="description"
                 value={course.description || ''}
                 onChange={handleChange}
-                variant="outlined"
               />
 
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -203,7 +196,6 @@ export default function EditCourse() {
                   name="price"
                   value={course.price || ''}
                   onChange={handleChange}
-                  variant="outlined"
                 />
                 <TextField
                   fullWidth
@@ -212,7 +204,6 @@ export default function EditCourse() {
                   label="Categoría"
                   value={course.category?.idCategory || ''}
                   onChange={handleCategoryChange}
-                  variant="outlined"
                 >
                   {categories.map((cat) => (
                     <MenuItem key={cat.idCategory} value={cat.idCategory}>
@@ -229,7 +220,6 @@ export default function EditCourse() {
                 label="Nivel"
                 value={selectedLevel}
                 onChange={handleLevelChange}
-                variant="outlined"
               >
                 <MenuItem value={1}>BASIC</MenuItem>
                 <MenuItem value={2}>INTERMEDIATE</MenuItem>
@@ -237,47 +227,54 @@ export default function EditCourse() {
               </TextField>
 
               <Box sx={{ display: 'flex', gap: 3 }}>
+                {/* Imagen de Perfil */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Imagen de Perfil
-                  </Typography>
+                  <Typography variant="body2" color="text.secondary">Imagen de Perfil</Typography>
                   {course.imageProfile && (
-                    <img src={course.imageProfile} alt="Imagen perfil" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px' }} />
+                    <img
+                      src={course.imageProfile}
+                      alt="Imagen perfil"
+                      style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px' }}
+                    />
                   )}
-                  <input
-                    type="file"
-                    name="imageProfile"
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(e, 'imageProfile')}
-                  />
+                  <label htmlFor="edit-profile">
+                    <input
+                      id="edit-profile"
+                      hidden
+                      accept="image/*"
+                      type="file"
+                      onChange={(e) => handleFileChange(e, 'imageProfile')}
+                    />
+                    <Button variant="outlined" component="span">
+                      Subir nueva imagen
+                    </Button>
+                  </label>
                 </Box>
 
+                {/* Imagen de Banner */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Imagen de Banner
-                  </Typography>
+                  <Typography variant="body2" color="text.secondary">Imagen de Banner</Typography>
                   {course.imageBanner && (
-                    <img src={course.imageBanner} alt="Imagen banner" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px' }} />
+                    <img
+                      src={course.imageBanner}
+                      alt="Imagen banner"
+                      style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '8px' }}
+                    />
                   )}
-                  <input
-                    type="file"
-                    name="imageBanner"
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(e, 'imageBanner')}
-                  />
+                  <label htmlFor="edit-banner">
+                    <input
+                      id="edit-banner"
+                      hidden
+                      accept="image/*"
+                      type="file"
+                      onChange={(e) => handleFileChange(e, 'imageBanner')}
+                    />
+                    <Button variant="outlined" component="span">
+                      Subir nuevo banner
+                    </Button>
+                  </label>
                 </Box>
               </Box>
-
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={course.status ?? true}
-                    onChange={handleChange}
-                    name="status"
-                  />
-                }
-                label="Curso Activo"
-              />
 
               <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
                 <Button type="submit" variant="contained" color="primary" size="large">
