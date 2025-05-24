@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getCourses, deleteCourse } from '../../services/courseService';
+import { getCoursesPagination, deleteCourse } from '../../services/courseService';
 import { Course } from '../../models/Course';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -18,7 +18,7 @@ import {
   Chip,
   Stack,
   Tooltip,
-  Pagination
+  Pagination,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
@@ -31,12 +31,14 @@ export default function Courses() {
 
   const fetchCourses = async (page: number) => {
     try {
-      const response = await getCourses(page, itemsPerPage);
-      setCourses(response.data.content);
-      setTotalPages(response.data.totalPages);
-      setCurrentPage(response.data.number);
+      const response = await getCoursesPagination(page, itemsPerPage);
+      const data = response.data;
+      setCourses(Array.isArray(data?.content) ? data.content : []);
+      setTotalPages(data?.totalPages || 0);
+      setCurrentPage(data?.number || 0);
     } catch (error) {
       console.error('Error fetching courses:', error);
+      setCourses([]);
     }
   };
 
@@ -56,9 +58,7 @@ export default function Courses() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Cursos
-        </Typography>
+        <Typography variant="h4" component="h1">Cursos</Typography>
         <Button
           variant="contained"
           color="primary"
@@ -84,7 +84,7 @@ export default function Courses() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {courses.map((course) => (
+            {Array.isArray(courses) && courses.map((course) => (
               <TableRow key={course.idCourse} hover>
                 <TableCell>
                   <CardMedia
@@ -104,19 +104,17 @@ export default function Courses() {
                 <TableCell>s/{course.price}</TableCell>
                 <TableCell>
                   <Chip
-                    label={course.level.name}
+                    label={course.level?.name || 'Sin nivel'}
                     color={
-                      course.level.idLevel === 1
-                        ? 'success'
-                        : course.level.idLevel === 2
-                        ? 'warning'
-                        : 'error'
+                      course.level?.idLevel === 1 ? 'success'
+                        : course.level?.idLevel === 2 ? 'warning'
+                        : 'default'
                     }
                     size="small"
                   />
                 </TableCell>
                 <TableCell>
-                  <Chip label={course.category.name} color="info" size="small" />
+                  <Chip label={course.category?.name || 'Sin categoría'} color="info" size="small" />
                 </TableCell>
                 <TableCell>
                   <Chip

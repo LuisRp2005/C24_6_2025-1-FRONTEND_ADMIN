@@ -1,9 +1,11 @@
 import API from './api';
 import { Notification } from '../models/Notification';
 
-export const getNotifications = (page = 0, size = 5) =>
-  API.get(`/notification?page=${page}&size=${size}`);
+export const getNotifications = () =>
+  API.get<Notification[]>('/notification');
 
+export const getNotificationsPagination = (page: number, size: number) =>
+  API.get(`/notification/all?page=${page}&size=${size}`);
 
 export const getNotificationsByUser = (userId: number) =>
   API.get<Notification[]>(`/notification/user/${userId}`);

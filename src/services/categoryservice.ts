@@ -1,8 +1,11 @@
 import API from './api';
 import { Category } from '../models/Category';
 
-export const getCategories = (page = 0, size = 5) =>
-  API.get(`/categories?page=${page}&size=${size}`);
+export const getCategories = () =>
+  API.get<Category[]>('/categories');
+
+export const getCategoriesPagination = (page: number, size: number) =>
+  API.get(`/categories/all?page=${page}&size=${size}`);
 
 export const getCategoryById = (id: number) => API.get<Category>(`/categories/${id}`);
 

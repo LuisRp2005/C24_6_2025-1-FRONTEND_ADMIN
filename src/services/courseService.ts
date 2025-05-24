@@ -2,8 +2,15 @@ import API from './api';
 import { Course } from '../models/Course';
 import { CourseEditDTO } from '../models/CourseEditDTO'
 
-export const getCourses = (page = 0, size = 5) =>
-  API.get(`/courses?page=${page}&size=${size}`, {
+export const getCourses = () =>
+  API.get<Course[]>('/courses', {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`
+    }
+  });
+
+export const getCoursesPagination = (page = 0, size = 5) =>
+  API.get(`/courses/all?page=${page}&size=${size}`, {
     headers: {
       Authorization: `Bearer ${localStorage.getItem('token')}`
     }

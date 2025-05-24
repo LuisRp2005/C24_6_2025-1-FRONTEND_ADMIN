@@ -19,8 +19,8 @@ import {
   Pagination,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
-import { deleteLesson, getLessons } from '../../services/lessonService';
-import { getModule } from '../../services/moduleService';
+import { deleteLesson, getLessonsPagination } from '../../services/lessonService';
+import { getModulePagination } from '../../services/moduleService';
 import { Lesson } from '../../models/Lesson';
 import { Module } from '../../models/Module';
 
@@ -39,7 +39,7 @@ export default function Lessons() {
 
   const loadLessons = async (page: number) => {
     try {
-      const response = await getLessons(page, itemsPerPage);
+      const response = await getLessonsPagination(page, itemsPerPage);
       setLessons(response.data.content);
       setTotalPages(response.data.totalPages);
       setCurrentPage(response.data.number);
@@ -50,8 +50,8 @@ export default function Lessons() {
 
   const loadModules = async () => {
     try {
-      const response = await getModule();
-      setModules(response.data);
+      const response = await getModulePagination(0, 100); // Carga todos los módulos
+      setModules(response.data.content);
     } catch (error) {
       console.error('Error cargando módulos:', error);
     }
@@ -73,7 +73,6 @@ export default function Lessons() {
   };
 
   const getModuleName = (idModule: number): string => {
-    if (!Array.isArray(modules)) return 'Cargando...';
     const module = modules.find((m) => m.idModule === idModule);
     return module ? module.name : 'Módulo no encontrado';
   };

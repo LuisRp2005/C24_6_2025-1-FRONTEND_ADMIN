@@ -18,7 +18,7 @@ import {
   Pagination,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
-import { getNotifications, deleteNotification } from '../../services/notificacionService';
+import { getNotificationsPagination, deleteNotification } from '../../services/notificacionService';
 import { Notification } from '../../models/Notification';
 
 export default function Notifications() {
@@ -34,7 +34,7 @@ export default function Notifications() {
 
   const loadNotifications = async (page: number) => {
     try {
-      const response = await getNotifications(page, itemsPerPage);
+      const response = await getNotificationsPagination(page, itemsPerPage);
       setNotifications(response.data.content);
       setTotalPages(response.data.totalPages);
       setCurrentPage(response.data.number);

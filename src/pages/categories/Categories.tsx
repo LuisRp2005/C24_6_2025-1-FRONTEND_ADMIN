@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCategories, deleteCategory } from '../../services/categoryservice';
+import { getCategoriesPagination, deleteCategory } from '../../services/categoryservice';
 import { Category } from '../../models/Category';
 import {
   Box,
@@ -18,7 +18,7 @@ import {
   Typography,
   Stack,
   Tooltip,
-  Pagination
+  Pagination,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
@@ -35,7 +35,7 @@ export default function Categories() {
 
   const fetchCategories = async (page: number) => {
     try {
-      const response = await getCategories(page, itemsPerPage);
+      const response = await getCategoriesPagination(page, itemsPerPage);
       setCategories(response.data.content);
       setTotalPages(response.data.totalPages);
       setCurrentPage(response.data.number);
@@ -83,14 +83,8 @@ export default function Categories() {
               <TableBody>
                 {categories.map((category) => (
                   <TableRow key={category.idCategory} hover>
-                    <TableCell>
-                      <Typography variant="subtitle1">{category.name}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {category.description || 'Sin descripción'}
-                      </Typography>
-                    </TableCell>
+                    <TableCell>{category.name}</TableCell>
+                    <TableCell>{category.description || 'Sin descripción'}</TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} justifyContent="flex-end">
                         <Tooltip title="Editar">

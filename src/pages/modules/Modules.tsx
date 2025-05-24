@@ -18,7 +18,7 @@ import {
   Pagination,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
-import { getModule, deleteModule } from '../../services/moduleService';
+import { getModulePagination, deleteModule } from '../../services/moduleService';
 import { Module } from '../../models/Module';
 
 export default function Modules() {
@@ -30,7 +30,7 @@ export default function Modules() {
 
   const loadModules = async (page: number) => {
     try {
-      const response = await getModule(page, itemsPerPage);
+      const response = await getModulePagination(page, itemsPerPage);
       setModules(response.data.content);
       setTotalPages(response.data.totalPages);
       setCurrentPage(response.data.number);

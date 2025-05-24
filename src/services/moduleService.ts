@@ -4,10 +4,12 @@ import { ModuleRequest } from "../models/ModuleRequest";
 
 export const createModule = (data: ModuleRequest) => API.post('/modules', data);
 
-export const getModule = (page = 0, size = 5) =>
-    API.get(`/modules?page=${page}&size=${size}`);
+export const getModule = () =>
+    API.get<Module[]>('/modules');
   
-
+export const getModulePagination = (page = 0, size = 5) =>
+    API.get(`/modules/all?page=${page}&size=${size}`);
+  
 export const updateModule = (id: number, data: ModuleRequest) => API.put(`/modules/${id}`, data)
 
 export const getModuleById = (id: number) => API.get<ModuleRequest>(`/modules/${id}`);
