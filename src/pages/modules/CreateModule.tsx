@@ -22,8 +22,6 @@ import { Course } from '../../models/Course';
 
 export default function CreateModule() {
   const navigate = useNavigate();
-
-  // Estado para el formulario
   const [moduleData, setModuleData] = useState<ModuleRequest>({
     name: '',
     description: '',
@@ -31,8 +29,6 @@ export default function CreateModule() {
     moduleOrder: 0,
     courseId: 0
   });
-
-  // Estado para los cursos
   const [courses, setCourses] = useState<Course[]>([]);
   const [error, setError] = useState<string | null>(null);
 

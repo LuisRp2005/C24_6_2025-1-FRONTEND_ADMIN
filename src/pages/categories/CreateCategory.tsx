@@ -10,7 +10,8 @@ import {
   TextField,
   Typography,
   Stack,
-  Divider
+  Divider,
+  CircularProgress,
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 
@@ -23,6 +24,8 @@ export default function CreateCategory() {
     description: '',
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCategory((prev) => ({
@@ -33,11 +36,14 @@ export default function CreateCategory() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await createCategory(category);
       navigate('/categories');
     } catch (error) {
       console.error('Error creating category:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,52 +68,59 @@ export default function CreateCategory() {
 
           <Divider sx={{ my: 3 }} />
 
-          <Box component="form" onSubmit={handleSubmit}>
-            <Stack spacing={3}>
-              <TextField
-                fullWidth
-                required
-                label="Nombre de la Categoría"
-                name="name"
-                value={category.name}
-                onChange={handleChange}
-                variant="outlined"
-                helperText="Ingrese un nombre descriptivo para la categoría"
-              />
-              <TextField
-                fullWidth
-                multiline
-                rows={4}
-                label="Descripción"
-                name="description"
-                value={category.description || ''}
-                onChange={handleChange}
-                variant="outlined"
-                helperText="Proporcione una descripción detallada de la categoría"
-              />
-
-              <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  sx={{ minWidth: 150 }}
-                >
-                  Crear Categoría
-                </Button>
-                <Button
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 6 }}>
+              <CircularProgress />
+              <Typography sx={{ ml: 2 }}>Creando categoría...</Typography>
+            </Box>
+          ) : (
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={3}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Nombre de la Categoría"
+                  name="name"
+                  value={category.name}
+                  onChange={handleChange}
                   variant="outlined"
-                  color="inherit"
-                  size="large"
-                  onClick={() => navigate('/categories')}
-                  sx={{ minWidth: 150 }}
-                >
-                  Cancelar
-                </Button>
+                  helperText="Ingrese un nombre descriptivo para la categoría"
+                />
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  label="Descripción"
+                  name="description"
+                  value={category.description || ''}
+                  onChange={handleChange}
+                  variant="outlined"
+                  helperText="Proporcione una descripción detallada de la categoría"
+                />
+
+                <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    sx={{ minWidth: 150 }}
+                  >
+                    Crear Categoría
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    size="large"
+                    onClick={() => navigate('/categories')}
+                    sx={{ minWidth: 150 }}
+                  >
+                    Cancelar
+                  </Button>
+                </Stack>
               </Stack>
-            </Stack>
-          </Box>
+            </Box>
+          )}
         </CardContent>
       </Card>
     </Box>

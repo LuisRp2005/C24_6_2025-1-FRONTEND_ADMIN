@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   TextField, Button, MenuItem,
-  Box, Card, CardContent, Typography, Stack, Divider
+  Box, Card, CardContent, Typography, Stack, Divider, CircularProgress
 } from '@mui/material';
 import { Category } from '../../models/Category';
 import { getCategories } from '../../services/categoryservice';
@@ -31,6 +31,7 @@ interface CourseFormState extends Omit<CreateCoursePayload, 'imageProfile' | 'im
 
 export default function CreateCourse() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<number>(1);
   const [imageProfilePreview, setImageProfilePreview] = useState<string | null>(null);
@@ -79,16 +80,18 @@ export default function CreateCourse() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setLoading(true);
+  
     if (!course.category || !course.level || !course.imageProfile || !course.imageBanner) {
       console.error('Faltan campos requeridos');
+      setLoading(false);
       return;
     }
-
+  
     try {
       const imageProfileUrl = await uploadToCloudinary(course.imageProfile);
       const imageBannerUrl = await uploadToCloudinary(course.imageBanner);
-
+  
       const payload: CreateCoursePayload = {
         name: course.name || '',
         authorName: course.authorName || '',
@@ -96,12 +99,12 @@ export default function CreateCourse() {
         price: course.price || 0,
         imageProfile: imageProfileUrl,
         imageBanner: imageBannerUrl,
-        status: true, // siempre activo
+        status: true,
         uploadDate: course.uploadDate || new Date().toISOString().split('T')[0],
         level: { idLevel: course.level.idLevel },
         category: { idCategory: course.category.idCategory },
       };
-
+  
       await createCourse(payload);
       navigate('/courses');
     } catch (error) {
@@ -110,6 +113,8 @@ export default function CreateCourse() {
       if (axiosError.response) {
         console.error('Detalles del error:', axiosError.response.data);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -130,7 +135,13 @@ export default function CreateCourse() {
 
           <Divider sx={{ my: 3 }} />
 
-          <Box component="form" onSubmit={handleSubmit}>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 6 }}>
+              <CircularProgress />  
+              <Typography sx={{ ml: 2 }}>Creando curso...</Typography>
+            </Box>
+          ) : (
+            <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={3}>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
@@ -202,9 +213,9 @@ export default function CreateCourse() {
                 onChange={handleLevelChange}
                 variant="outlined"
               >
-                <MenuItem value={1}>BASIC</MenuItem>
-                <MenuItem value={2}>INTERMEDIATE</MenuItem>
-                <MenuItem value={3}>ADVANCED</MenuItem>
+                <MenuItem value={1}>Basico</MenuItem>
+                <MenuItem value={2}>Intermedio</MenuItem>
+                <MenuItem value={3}>Avanzado</MenuItem>
               </TextField>
 
               <Box sx={{ display: 'flex', gap: 3 }}>
@@ -279,6 +290,7 @@ export default function CreateCourse() {
               </Stack>
             </Stack>
           </Box>
+          )}
         </CardContent>
       </Card>
     </Box>

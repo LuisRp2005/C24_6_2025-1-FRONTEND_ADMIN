@@ -17,6 +17,7 @@ import { getLessons } from '../services/lessonService';
 import { getCategories } from '../services/categoryservice';
 import { getModule } from '../services/moduleService';
 import logo from '../assets/images/logo_codigo.png';
+import { downloadSalesReport } from "../services/paymentService";
 import { Course } from '../models/Course';
 
 const StatCard = ({ title, value, icon, color, loading }: any) => (
@@ -50,8 +51,6 @@ const Dashboard: React.FC = () => {
 
   const [pieData, setPieData] = useState<any[]>([]);
   const [levelData, setLevelData] = useState<any[]>([]);
-  const [statusData, setStatusData] = useState<any[]>([]);
-  const [authorData, setAuthorData] = useState<any[]>([]);
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
 
   const handleDownloadPDF = () => {
@@ -65,7 +64,6 @@ const Dashboard: React.FC = () => {
       const date = new Date().toLocaleString('es-PE');
 
       pdf.addImage(logo, 'PNG', pdfWidth / 2 - 25, 5, 50, 15);
-
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(14);
       pdf.text('REPORTE DE ADMINISTRACIÓN - Plataforma Cursos', pdfWidth / 2, 25, { align: 'center' });
@@ -118,19 +116,6 @@ const Dashboard: React.FC = () => {
         }, {});
         const levelFormatted = Object.entries(byLevel).map(([name, count]: any) => ({ name, cantidad: count }));
 
-        const byAuthor = courses.reduce((acc: any, course: Course) => {
-          const author = course.authorName;
-          if (author) acc[author] = (acc[author] || 0) + 1;
-          return acc;
-        }, {});
-        const authorFormatted = Object.entries(byAuthor).map(([name, count]: any) => ({ name, cantidad: count }))
-          .sort((a, b) => b.cantidad - a.cantidad).slice(0, 5);
-
-        const statusFormatted = [
-          { name: 'Activos', value: courses.filter((c: Course) => c.status === true).length },
-          { name: 'Inactivos', value: courses.filter((c: Course) => c.status === false).length }
-        ];
-
         const monthly: any = {};
         courses.forEach((course: Course) => {
           const month = new Date(course.uploadDate).toLocaleDateString('es-PE', { month: 'short', year: 'numeric' });
@@ -148,8 +133,6 @@ const Dashboard: React.FC = () => {
 
         setPieData(pieFormatted);
         setLevelData(levelFormatted);
-        setStatusData(statusFormatted);
-        setAuthorData(authorFormatted);
         setMonthlyData(monthlyFormatted);
       } catch (error) {
         console.error('Error al cargar dashboard:', error);
@@ -165,12 +148,26 @@ const Dashboard: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
-        <button onClick={handleDownloadPDF} style={{
-          padding: '8px 16px', backgroundColor: '#1976d2', color: 'white',
-          border: 'none', borderRadius: 6, cursor: 'pointer'
-        }}>
-          Descargar Reporte en PDF
+      {/* Botón alineado a la derecha */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <button
+          onClick={downloadSalesReport}
+          style={{
+            backgroundColor: '#2e7d32',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '10px 16px',
+            fontSize: '15px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+            transition: 'background 0.3s',
+          }}
+          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1b5e20'}
+          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2e7d32'}
+        >
+          📊 Descargar Reporte de Ventas (Excel)
         </button>
       </Box>
 
@@ -202,20 +199,6 @@ const Dashboard: React.FC = () => {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-
-            <Card sx={{ flex: 1, minWidth: 300 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Top Autores</Typography>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart layout="vertical" data={authorData}>
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" />
-                    <Tooltip /><Legend />
-                    <Bar dataKey="cantidad" fill="#9c27b0" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
           </Box>
 
           {/* Fila 2 */}
@@ -230,22 +213,6 @@ const Dashboard: React.FC = () => {
                     <Tooltip /><Legend />
                     <Bar dataKey="cantidad" fill="#1976d2" />
                   </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card sx={{ flex: 1, minWidth: 300 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Cursos por Estado</Typography>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie data={statusData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label>
-                      {statusData.map((_, index) => (
-                        <Cell key={`cell-status-${index}`} fill={pieColors[index % pieColors.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip /><Legend />
-                  </PieChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>

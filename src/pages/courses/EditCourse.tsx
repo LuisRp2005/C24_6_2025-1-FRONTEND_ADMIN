@@ -15,6 +15,7 @@ import {
   Stack,
   Divider,
   MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { AxiosError } from 'axios';
@@ -34,6 +35,7 @@ interface EditCoursePayload {
 
 export default function EditCourse() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const { id } = useParams();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<number>(1);
@@ -101,19 +103,21 @@ export default function EditCourse() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setLoading(true);
+  
     if (!course.category || !course.level) {
       console.error('Faltan categoría o nivel.');
+      setLoading(false);
       return;
     }
-
+  
     try {
       let imageProfileUrl = course.imageProfile;
       let imageBannerUrl = course.imageBanner;
-
+  
       if (imageProfile) imageProfileUrl = await uploadToCloudinary(imageProfile);
       if (imageBanner) imageBannerUrl = await uploadToCloudinary(imageBanner);
-
+  
       const payload: EditCoursePayload = {
         name: course.name || '',
         authorName: course.authorName || '',
@@ -126,7 +130,7 @@ export default function EditCourse() {
         level: { idLevel: selectedLevel },
         category: { idCategory: course.category.idCategory },
       };
-
+  
       await updateCourse(Number(id), payload);
       navigate('/courses');
     } catch (error) {
@@ -135,6 +139,8 @@ export default function EditCourse() {
       if (axiosError.response) {
         console.error('Detalles del error:', axiosError.response.data);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -155,7 +161,13 @@ export default function EditCourse() {
 
           <Divider sx={{ my: 3 }} />
 
-          <Box component="form" onSubmit={handleSubmit}>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 6 }}>
+              <CircularProgress />
+              <Typography sx={{ ml: 2 }}>Guardando cambios...</Typography>
+            </Box>
+          ) : (
+            <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={3}>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
@@ -221,9 +233,9 @@ export default function EditCourse() {
                 value={selectedLevel}
                 onChange={handleLevelChange}
               >
-                <MenuItem value={1}>BASIC</MenuItem>
-                <MenuItem value={2}>INTERMEDIATE</MenuItem>
-                <MenuItem value={3}>ADVANCED</MenuItem>
+                <MenuItem value={1}>Basico</MenuItem>
+                <MenuItem value={2}>Intermedio</MenuItem>
+                <MenuItem value={3}>Avanzado</MenuItem>
               </TextField>
 
               <Box sx={{ display: 'flex', gap: 3 }}>
@@ -286,6 +298,7 @@ export default function EditCourse() {
               </Stack>
             </Stack>
           </Box>
+          )}
         </CardContent>
       </Card>
     </Box>

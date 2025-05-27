@@ -103,15 +103,16 @@ export default function Courses() {
                 <TableCell>{course.authorName}</TableCell>
                 <TableCell>s/{course.price}</TableCell>
                 <TableCell>
-                  <Chip
-                    label={course.level?.name || 'Sin nivel'}
-                    color={
-                      course.level?.idLevel === 1 ? 'success'
-                        : course.level?.idLevel === 2 ? 'warning'
-                        : 'default'
-                    }
-                    size="small"
-                  />
+                <Chip
+                  label={course.level?.name || 'Sin nivel'}
+                  color={
+                    course.level?.idLevel === 1 ? 'success'
+                      : course.level?.idLevel === 2 ? 'warning'
+                      : course.level?.idLevel === 3 ? 'error'
+                      : 'default'
+                  }
+                  size="small"
+                />
                 </TableCell>
                 <TableCell>
                   <Chip label={course.category?.name || 'Sin categoría'} color="info" size="small" />
