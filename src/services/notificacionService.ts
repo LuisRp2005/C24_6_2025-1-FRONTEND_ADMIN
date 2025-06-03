@@ -28,3 +28,8 @@ export const getNotificationById = (notificationId: number) =>
 export const updateNotification = (notificationId: number, notification: Notification) =>
   API.put(`/notification/${notificationId}`, notification);
 
+export const sendTutorTip = () => API.post('/notification/tutor-tip');
+export const sendTutorRecommendation = () => API.post('/notification/tutor-recommendation');
+export const sendMotivationalNotification = () => API.post('/notification/motivational');
+export const sendDailyChallenge = () => API.post('/notification/daily-challenge');
+export const sendCourseProgress = () => API.post('/notification/course-progress');

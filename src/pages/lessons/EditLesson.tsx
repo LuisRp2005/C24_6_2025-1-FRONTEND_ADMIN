@@ -29,7 +29,6 @@ export default function EditLesson() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
-
   const [lesson, setLesson] = useState<Partial<LessonRequest>>({});
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -114,6 +113,9 @@ export default function EditLesson() {
       <Card elevation={3}>
         <CardContent>
           <Typography variant="h4" gutterBottom>Editar Lección</Typography>
+          <Typography variant="body1" color="text.secondary" paragraph>
+            Actualiza los siguientes campos para modificar la lección.
+          </Typography>
           <Divider sx={{ my: 2 }} />
 
           {loading ? (
@@ -164,7 +166,7 @@ export default function EditLesson() {
                 />
 
                 {!modoEdicionModulo ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <TextField
                       label="Módulo actual"
                       value={moduloNombreActual}
@@ -216,9 +218,12 @@ export default function EditLesson() {
                 )}
 
                 <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                  {/* Imagen */}
                   <Box sx={{ flex: 1, minWidth: 200 }}>
                     <Typography variant="body2" color="text.secondary">Imagen Actual:</Typography>
-                    {imagePreview && <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: '8px' }} />}
+                    {imagePreview && (
+                      <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 8 }} />
+                    )}
                     <label htmlFor="upload-image">
                       <input
                         id="upload-image"
@@ -237,6 +242,7 @@ export default function EditLesson() {
                     </label>
                   </Box>
 
+                  {/* Video */}
                   <Box sx={{ flex: 1, minWidth: 200 }}>
                     <Typography variant="body2" color="text.secondary">Video actual:</Typography>
                     {lesson.urlVideo && (
@@ -271,6 +277,7 @@ export default function EditLesson() {
                     </label>
                   </Box>
 
+                  {/* PDF */}
                   <Box sx={{ flex: 1, minWidth: 200 }}>
                     <Typography variant="body2" color="text.secondary">PDF actual:</Typography>
                     {lesson.pdfUrl && (

@@ -19,23 +19,34 @@ import {
   Stack,
   Tooltip,
   Pagination,
+  TextField,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+} from '@mui/icons-material';
 
 export default function Courses() {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [levelFilter, setLevelFilter] = useState<'all' | 1 | 2 | 3>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [dateOrder, setDateOrder] = useState<'recent' | 'oldest'>('recent');
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 5;
   const navigate = useNavigate();
 
-  const fetchCourses = async (page: number) => {
+  const fetchCourses = async () => {
     try {
-      const response = await getCoursesPagination(page, itemsPerPage);
+      const response = await getCoursesPagination(0, 1000);
       const data = response.data;
       setCourses(Array.isArray(data?.content) ? data.content : []);
-      setTotalPages(data?.totalPages || 0);
-      setCurrentPage(data?.number || 0);
     } catch (error) {
       console.error('Error fetching courses:', error);
       setCourses([]);
@@ -43,22 +54,59 @@ export default function Courses() {
   };
 
   useEffect(() => {
-    fetchCourses(currentPage);
-  }, [currentPage]);
+    fetchCourses();
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm, statusFilter, levelFilter, categoryFilter, dateOrder]);
 
   const handleDelete = async (id: number) => {
     try {
       await deleteCourse(id);
-      fetchCourses(currentPage);
+      fetchCourses();
     } catch (error) {
       console.error('Error deleting course:', error);
     }
   };
 
+  const categoryOptions = Array.from(new Set(courses.map(c => c.category?.name).filter(Boolean)));
+
+  const filteredCourses = courses.filter(course => {
+    const matchesSearch =
+      course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.authorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.category?.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && course.status) ||
+      (statusFilter === 'inactive' && !course.status);
+
+    const matchesLevel =
+      levelFilter === 'all' || course.level?.idLevel === levelFilter;
+
+    const matchesCategory =
+      categoryFilter === 'all' || course.category?.name === categoryFilter;
+
+    return matchesSearch && matchesStatus && matchesLevel && matchesCategory;
+  });
+
+  const sortedCourses = [...filteredCourses].sort((a, b) => {
+    const dateA = new Date(a.uploadDate).getTime();
+    const dateB = new Date(b.uploadDate).getTime();
+    return dateOrder === 'recent' ? dateB - dateA : dateA - dateB;
+  });
+
+  const paginatedCourses = sortedCourses.slice(
+    currentPage * itemsPerPage,
+    currentPage * itemsPerPage + itemsPerPage
+  );
+
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">Cursos</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4">Cursos</Typography>
         <Button
           variant="contained"
           color="primary"
@@ -69,6 +117,74 @@ export default function Courses() {
         </Button>
       </Box>
 
+      {/* Filtros */}
+      <Stack direction="row" spacing={2} mb={3} flexWrap="wrap">
+        <TextField
+          label="Buscar"
+          variant="outlined"
+          size="small"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+
+        <FormControl size="small">
+          <InputLabel>Estado</InputLabel>
+          <Select
+            value={statusFilter}
+            label="Estado"
+            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+          >
+            <MenuItem value="all">Todos</MenuItem>
+            <MenuItem value="active">Activos</MenuItem>
+            <MenuItem value="inactive">Inactivos</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl size="small">
+          <InputLabel>Nivel</InputLabel>
+          <Select
+            value={levelFilter}
+            label="Nivel"
+            onChange={(e) => {
+              const val = e.target.value;
+              setLevelFilter(val === 'all' ? 'all' : Number(val) as 1 | 2 | 3);
+            }}
+          >
+            <MenuItem value="all">Todos</MenuItem>
+            <MenuItem value={1}>Básico</MenuItem>
+            <MenuItem value={2}>Intermedio</MenuItem>
+            <MenuItem value={3}>Avanzado</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl size="small">
+          <InputLabel>Categoría</InputLabel>
+          <Select
+            value={categoryFilter}
+            label="Categoría"
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <MenuItem value="all">Todas</MenuItem>
+            {categoryOptions.map((cat, i) => (
+              <MenuItem key={i} value={cat}>{cat}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small">
+          <InputLabel>Fecha de subida</InputLabel>
+          <Select
+            value={dateOrder}
+            label="Fecha de subida"
+            onChange={(e) => setDateOrder(e.target.value as 'recent' | 'oldest')}
+          >
+            <MenuItem value="recent">Más recientes</MenuItem>
+            <MenuItem value="oldest">Más antiguos</MenuItem>
+          </Select>
+        </FormControl>
+      </Stack>
+
+      {/* Tabla */}
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -84,7 +200,7 @@ export default function Courses() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {Array.isArray(courses) && courses.map((course) => (
+            {paginatedCourses.map((course) => (
               <TableRow key={course.idCourse} hover>
                 <TableCell>
                   <CardMedia
@@ -103,16 +219,16 @@ export default function Courses() {
                 <TableCell>{course.authorName}</TableCell>
                 <TableCell>s/{course.price}</TableCell>
                 <TableCell>
-                <Chip
-                  label={course.level?.name || 'Sin nivel'}
-                  color={
-                    course.level?.idLevel === 1 ? 'success'
-                      : course.level?.idLevel === 2 ? 'warning'
-                      : course.level?.idLevel === 3 ? 'error'
-                      : 'default'
-                  }
-                  size="small"
-                />
+                  <Chip
+                    label={course.level?.name || 'Sin nivel'}
+                    color={
+                      course.level?.idLevel === 1 ? 'success'
+                        : course.level?.idLevel === 2 ? 'warning'
+                        : course.level?.idLevel === 3 ? 'error'
+                        : 'default'
+                    }
+                    size="small"
+                  />
                 </TableCell>
                 <TableCell>
                   <Chip label={course.category?.name || 'Sin categoría'} color="info" size="small" />
@@ -127,18 +243,12 @@ export default function Courses() {
                 <TableCell align="right">
                   <Stack direction="row" spacing={1} justifyContent="flex-end">
                     <Tooltip title="Editar">
-                      <IconButton
-                        color="primary"
-                        onClick={() => navigate(`/courses/edit/${course.idCourse}`)}
-                      >
+                      <IconButton color="primary" onClick={() => navigate(`/courses/edit/${course.idCourse}`)}>
                         <EditIcon />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Eliminar">
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDelete(course.idCourse)}
-                      >
+                      <IconButton color="error" onClick={() => handleDelete(course.idCourse)}>
                         <DeleteIcon />
                       </IconButton>
                     </Tooltip>
@@ -150,9 +260,10 @@ export default function Courses() {
         </Table>
       </TableContainer>
 
+      {/* Paginación */}
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
         <Pagination
-          count={totalPages}
+          count={Math.ceil(sortedCourses.length / itemsPerPage)}
           page={currentPage + 1}
           onChange={(e, value) => setCurrentPage(value - 1)}
           color="primary"

@@ -10,148 +10,148 @@ import {
   Divider,
   TextField,
   MenuItem,
-  FormControl,
+  Select,
   InputLabel,
-  Select
+  FormControl,
+  CircularProgress,
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
-import { ModuleRequest } from '../../models/ModuleRequest';
 import { createModule } from '../../services/moduleService';
 import { getCourses } from '../../services/courseService';
 import { Course } from '../../models/Course';
+import { ModuleRequest } from '../../models/ModuleRequest';
 
 export default function CreateModule() {
   const navigate = useNavigate();
-  const [moduleData, setModuleData] = useState<ModuleRequest>({
+  const [form, setForm] = useState<ModuleRequest>({
     name: '',
     description: '',
     numberModule: '',
     moduleOrder: 0,
-    courseId: 0
+    courseId: 0,
   });
+
   const [courses, setCourses] = useState<Course[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Cargar los cursos desde la API
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         const response = await getCourses();
-        setCourses(response.data); // Asumiendo que la respuesta tiene la lista de cursos
+        setCourses(response.data);
       } catch (err) {
-        setError('Hubo un error al cargar los cursos.');
+        setError('Error al cargar los cursos.');
       }
     };
 
     fetchCourses();
   }, []);
 
-  // Manejar cambios en los campos del formulario
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-  
-    const newValue = ['moduleOrder'].includes(name) ? Number(value) : value;
-  
-    setModuleData(prev => ({
+    setForm(prev => ({
       ...prev,
-      [name]: newValue
+      [name]: name === 'moduleOrder' ? Number(value) : value,
     }));
   };
-  
 
-  const handleSelectChange = (e: any) => {
-    const value = Number(e.target.value);
-    setModuleData({ ...moduleData, courseId: value });
+  const handleCourseChange = (e: any) => {
+    setForm(prev => ({
+      ...prev,
+      courseId: Number(e.target.value),
+    }));
   };
-  
-  
 
-  // Manejar el envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    // Validación simple
-    if (
-      !moduleData.name ||
-      !moduleData.description ||
-      !moduleData.numberModule ||
-      !moduleData.courseId ||
-      moduleData.moduleOrder <= 0
-    ) {
-      setError('Por favor, complete todos los campos.');
+
+    const { name, description, numberModule, moduleOrder, courseId } = form;
+
+    if (!name || !description || !numberModule || !moduleOrder || !courseId) {
+      setError('Todos los campos son obligatorios');
       return;
     }
-  
-    setError(null); // Limpiar errores
-  
+
+    setError(null);
+    setLoading(true);
+
     try {
-      await createModule(moduleData);
-      navigate('/modules'); // Redirigir al listado de módulos después de la creación
+      await createModule(form);
+      navigate('/modules');
     } catch (err) {
-      console.error('Error en la creación del módulo:', err);
-      setError('Hubo un error al crear el módulo. Intente de nuevo.');
+      console.error('Error creando módulo:', err);
+      setError('Error al crear el módulo. Intenta nuevamente.');
+    } finally {
+      setLoading(false);
     }
   };
-  
 
   return (
-    <Box sx={{ padding: 2 }}>
-      <Button
-        variant="outlined"
-        startIcon={<ArrowBackIcon />}
-        onClick={() => navigate('/modules')}
-      >
-        Volver a módulos
+    <Box sx={{ p: 3 }}>
+      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/modules')} sx={{ mb: 3 }}>
+        Volver
       </Button>
 
-      <Card sx={{ marginTop: 3 }}>
+      <Card elevation={3}>
         <CardContent>
-          <Typography variant="h5">Crear Nuevo Módulo</Typography>
-          <Divider sx={{ marginY: 2 }} />
+          <Typography variant="h4" component="h1" gutterBottom>
+            Crear Nuevo Módulo
+          </Typography>
+          <Typography variant="body1" color="text.secondary" paragraph>
+            Completa los siguientes campos para registrar un nuevo módulo.
+          </Typography>
+
+          <Divider sx={{ my: 3 }} />
+
           {error && <Typography color="error">{error}</Typography>}
 
-          <form onSubmit={handleSubmit}>
-            <Stack spacing={2}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <Stack spacing={3}>
               <TextField
+                required
                 label="Nombre del Módulo"
-                variant="outlined"
-                fullWidth
                 name="name"
-                value={moduleData.name}
-                onChange={handleInputChange}
+                value={form.name}
+                onChange={handleChange}
+                fullWidth
               />
               <TextField
+                required
                 label="Descripción"
-                variant="outlined"
-                fullWidth
                 name="description"
-                value={moduleData.description}
-                onChange={handleInputChange}
-              />
-              <TextField
-                label="Número del Módulo"
-                variant="outlined"
+                value={form.description}
+                onChange={handleChange}
                 fullWidth
-                name="numberModule"
-                value={moduleData.numberModule}
-                onChange={handleInputChange}
+                multiline
+                rows={3}
               />
-              <TextField
-                label="Orden del Módulo"
-                variant="outlined"
-                fullWidth
-                type="number"
-                name="moduleOrder"
-                value={moduleData.moduleOrder}
-                onChange={handleInputChange}
-              />
-              <FormControl fullWidth>
-                <InputLabel id="course-select-label">Seleccionar Curso</InputLabel>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  required
+                  label="Número del Módulo"
+                  name="numberModule"
+                  value={form.numberModule}
+                  onChange={handleChange}
+                  fullWidth
+                />
+                <TextField
+                  required
+                  label="Orden del Módulo"
+                  name="moduleOrder"
+                  type="number"
+                  value={form.moduleOrder}
+                  onChange={handleChange}
+                  fullWidth
+                />
+              </Box>
+              <FormControl fullWidth required>
+                <InputLabel id="course-label">Curso</InputLabel>
                 <Select
-                  labelId="course-select-label"
-                  value={moduleData.courseId}
-                  onChange={handleSelectChange}
-                  label="Seleccionar Curso"
+                  labelId="course-label"
+                  value={form.courseId.toString()}
+                  label="Curso"
+                  onChange={handleCourseChange}
                 >
                   {courses.map((course) => (
                     <MenuItem key={course.idCourse} value={course.idCourse}>
@@ -160,11 +160,31 @@ export default function CreateModule() {
                   ))}
                 </Select>
               </FormControl>
-              <Button variant="contained" type="submit">
-                Crear Módulo
-              </Button>
+
+              <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  sx={{ minWidth: 150 }}
+                  disabled={loading}
+                >
+                  {loading ? <CircularProgress size={24} color="inherit" /> : 'Crear Módulo'}
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  size="large"
+                  sx={{ minWidth: 150 }}
+                  onClick={() => navigate('/modules')}
+                  disabled={loading}
+                >
+                  Cancelar
+                </Button>
+              </Stack>
             </Stack>
-          </form>
+          </Box>
         </CardContent>
       </Card>
     </Box>

@@ -128,6 +128,9 @@ export default function CreateLesson() {
           <Typography variant="h4" component="h1" gutterBottom>
             Crear Nueva Lección
           </Typography>
+          <Typography variant="body1" color="text.secondary" paragraph>
+            Completa los siguientes campos para registrar una nueva lección.
+          </Typography>
           <Divider sx={{ my: 2 }} />
 
           {loading ? (
@@ -138,27 +141,26 @@ export default function CreateLesson() {
           ) : (
             <Box component="form" onSubmit={handleSubmit}>
               <Stack spacing={3}>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  required
-                  label="Título"
-                  name="title"
-                  value={lesson.title}
-                  onChange={handleChange}
-                  fullWidth
-                />
-                {lesson.duration && (
+                <Box sx={{ display: 'flex', gap: 2 }}>
                   <TextField
-                    label="Duración (HH:MM:SS)"
-                    name="duration"
-                    value={lesson.duration}
+                    required
+                    label="Título"
+                    name="title"
+                    value={lesson.title}
+                    onChange={handleChange}
                     fullWidth
-                    InputProps={{ readOnly: true }}
-                    disabled
                   />
-                )}
-              </Box>
-
+                  {lesson.duration && (
+                    <TextField
+                      label="Duración (HH:MM:SS)"
+                      name="duration"
+                      value={lesson.duration}
+                      fullWidth
+                      InputProps={{ readOnly: true }}
+                      disabled
+                    />
+                  )}
+                </Box>
 
                 {detectingDuration && (
                   <Typography variant="body2" color="text.secondary">

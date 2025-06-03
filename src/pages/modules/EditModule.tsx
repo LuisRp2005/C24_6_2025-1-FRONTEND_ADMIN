@@ -12,7 +12,8 @@ import {
   MenuItem,
   Select,
   InputLabel,
-  FormControl
+  FormControl,
+  CircularProgress
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { SelectChangeEvent } from '@mui/material';
@@ -23,17 +24,17 @@ import { ModuleRequest } from '../../models/ModuleRequest';
 
 export default function EditModule() {
   const navigate = useNavigate();
-  const { id } = useParams();  // Get the module ID from the route parameters
-
+  const { id } = useParams();
   const [form, setForm] = useState<Partial<ModuleRequest>>({
     name: '',
     description: '',
     numberModule: '',
     moduleOrder: 0,
-    courseId: 0
+    courseId: 0,
   });
 
   const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -49,11 +50,10 @@ export default function EditModule() {
       if (id) {
         try {
           const res = await getModuleById(Number(id));
-          console.log("Fetched module:", res.data); // Check the response data
           if (res.data) {
             setForm({
               ...res.data,
-              courseId: res.data.courseId || 0, // Asegúrate de manejar correctamente courseId
+              courseId: res.data.courseId || 0,
             });
           }
         } catch (error) {
@@ -78,13 +78,12 @@ export default function EditModule() {
     const courseId = Number(event.target.value);
     setForm((prev) => ({
       ...prev,
-      courseId, // Asegúrate de actualizar correctamente courseId
+      courseId,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const { name, description, numberModule, moduleOrder, courseId } = form;
 
     if (!name || !description || !numberModule || !moduleOrder || !courseId) {
@@ -100,12 +99,15 @@ export default function EditModule() {
       courseId,
     };
 
+    setLoading(true);
     try {
-      await updateModule(Number(id), payload);  // Update the module
+      await updateModule(Number(id), payload);
       navigate('/modules');
     } catch (error: any) {
       console.error('Error actualizando módulo:', error?.response?.data || error.message);
       alert('Error actualizando módulo. Verifica los datos.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -183,10 +185,24 @@ export default function EditModule() {
               </FormControl>
 
               <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
-                <Button type="submit" variant="contained" color="primary" size="large" sx={{ minWidth: 150 }}>
-                  Actualizar Módulo
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  sx={{ minWidth: 150 }}
+                  disabled={loading}
+                >
+                  {loading ? <CircularProgress size={24} color="inherit" /> : 'Actualizar Módulo'}
                 </Button>
-                <Button variant="outlined" color="inherit" size="large" onClick={() => navigate('/modules')} sx={{ minWidth: 150 }}>
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  size="large"
+                  onClick={() => navigate('/modules')}
+                  sx={{ minWidth: 150 }}
+                  disabled={loading}
+                >
                   Cancelar
                 </Button>
               </Stack>
@@ -197,4 +213,3 @@ export default function EditModule() {
     </Box>
   );
 }
-   

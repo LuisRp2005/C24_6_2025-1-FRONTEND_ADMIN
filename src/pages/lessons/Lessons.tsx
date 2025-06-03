@@ -17,45 +17,56 @@ import {
   Stack,
   Avatar,
   Pagination,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { deleteLesson, getLessonsPagination } from '../../services/lessonService';
 import { getModulePagination } from '../../services/moduleService';
+import { getCourses } from '../../services/courseService';
 import { Lesson } from '../../models/Lesson';
 import { Module } from '../../models/Module';
+import { Course } from '../../models/Course';
 
 export default function Lessons() {
   const navigate = useNavigate();
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [allLessons, setAllLessons] = useState<Lesson[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
+  const [courses, setCourses] = useState<Course[]>([]);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState('all');
+  const [selectedModule, setSelectedModule] = useState('all');
+
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 5;
 
+  const fetchAllData = async () => {
+    try {
+      const [lessonRes, moduleRes, courseRes] = await Promise.all([
+        getLessonsPagination(0, 1000),
+        getModulePagination(0, 1000),
+        getCourses()
+      ]);
+      setAllLessons(lessonRes.data.content || []);
+      setModules(moduleRes.data.content || []);
+      setCourses(courseRes.data || []);
+    } catch (error) {
+      console.error('Error cargando datos:', error);
+    }
+  };
+
   useEffect(() => {
-    loadLessons(currentPage);
-    loadModules();
-  }, [currentPage]);
+    fetchAllData();
+  }, []);
 
-  const loadLessons = async (page: number) => {
-    try {
-      const response = await getLessonsPagination(page, itemsPerPage);
-      setLessons(response.data.content);
-      setTotalPages(response.data.totalPages);
-      setCurrentPage(response.data.number);
-    } catch (error) {
-      console.error('Error cargando lecciones:', error);
-    }
-  };
-
-  const loadModules = async () => {
-    try {
-      const response = await getModulePagination(0, 100); // Carga todos los módulos
-      setModules(response.data.content);
-    } catch (error) {
-      console.error('Error cargando módulos:', error);
-    }
-  };
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm, selectedCourse, selectedModule]);
 
   const handleEdit = (id: number) => {
     navigate(`/lessons/edit/${id}`);
@@ -65,7 +76,7 @@ export default function Lessons() {
     if (window.confirm('¿Estás seguro de que deseas eliminar esta lección?')) {
       try {
         await deleteLesson(id);
-        await loadLessons(currentPage);
+        fetchAllData();
       } catch (error) {
         console.error('Error eliminando lección:', error);
       }
@@ -73,9 +84,33 @@ export default function Lessons() {
   };
 
   const getModuleName = (idModule: number): string => {
-    const module = modules.find((m) => m.idModule === idModule);
-    return module ? module.name : 'Módulo no encontrado';
+    const mod = modules.find((m) => m.idModule === idModule);
+    return mod ? mod.name : 'Módulo no encontrado';
   };
+
+  const filteredModules = selectedCourse === 'all'
+    ? modules
+    : modules.filter(mod => mod.course?.idCourse?.toString() === selectedCourse);
+
+  const filteredLessons = allLessons.filter(lesson => {
+    const matchesSearch =
+      lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lesson.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesModule =
+      selectedModule === 'all' || lesson.idModule.toString() === selectedModule;
+
+    const matchesCourse =
+      selectedCourse === 'all' ||
+      filteredModules.some(mod => mod.idModule === lesson.idModule);
+
+    return matchesSearch && matchesCourse && matchesModule;
+  });
+
+  const paginatedLessons = filteredLessons.slice(
+    currentPage * itemsPerPage,
+    currentPage * itemsPerPage + itemsPerPage
+  );
 
   return (
     <Box sx={{ p: 3 }}>
@@ -92,6 +127,53 @@ export default function Lessons() {
         </Button>
       </Stack>
 
+      {/* Filtros */}
+      <Stack direction="row" spacing={2} sx={{ mb: 3 }} flexWrap="wrap">
+        <TextField
+          label="Buscar"
+          variant="outlined"
+          size="small"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Curso</InputLabel>
+          <Select
+            value={selectedCourse}
+            label="Curso"
+            onChange={(e) => {
+              setSelectedCourse(e.target.value);
+              setSelectedModule('all');
+            }}
+          >
+            <MenuItem value="all">Todos</MenuItem>
+            {courses.map((c) => (
+              <MenuItem key={c.idCourse} value={c.idCourse.toString()}>
+                {c.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Módulo</InputLabel>
+          <Select
+            value={selectedModule}
+            label="Módulo"
+            onChange={(e) => setSelectedModule(e.target.value)}
+          >
+            <MenuItem value="all">Todos</MenuItem>
+            {filteredModules.map((m) => (
+              <MenuItem key={m.idModule} value={m.idModule.toString()}>
+                {m.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Stack>
+
+      {/* Tabla */}
       <Card>
         <CardContent>
           <TableContainer component={Paper}>
@@ -107,7 +189,7 @@ export default function Lessons() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {lessons.map((lesson) => (
+                {paginatedLessons.map((lesson) => (
                   <TableRow key={lesson.idLesson}>
                     <TableCell>
                       <Avatar
@@ -135,9 +217,10 @@ export default function Lessons() {
             </Table>
           </TableContainer>
 
+          {/* Paginación */}
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
             <Pagination
-              count={totalPages}
+              count={Math.ceil(filteredLessons.length / itemsPerPage)}
               page={currentPage + 1}
               onChange={(e, value) => setCurrentPage(value - 1)}
               color="primary"

@@ -16,6 +16,11 @@ import {
   IconButton,
   Stack,
   Pagination,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { getModulePagination, deleteModule } from '../../services/moduleService';
@@ -24,46 +29,68 @@ import { Module } from '../../models/Module';
 export default function Modules() {
   const navigate = useNavigate();
   const [modules, setModules] = useState<Module[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
+  const [allModules, setAllModules] = useState<Module[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [orderFilter, setOrderFilter] = useState('all');
+  const [numberFilter, setNumberFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 5;
 
-  const loadModules = async (page: number) => {
+  const fetchModules = async () => {
     try {
-      const response = await getModulePagination(page, itemsPerPage);
-      setModules(response.data.content);
-      setTotalPages(response.data.totalPages);
-      setCurrentPage(response.data.number);
+      const response = await getModulePagination(0, 1000);
+      const data = response.data.content || [];
+      setAllModules(data);
     } catch (error) {
       console.error('Error cargando módulos:', error);
     }
   };
 
   useEffect(() => {
-    loadModules(currentPage);
-  }, [currentPage]);
+    fetchModules();
+  }, []);
 
-  const handleEdit = (id: number) => {
-    navigate(`/modules/edit/${id}`);
-  };
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm, orderFilter, numberFilter]);
 
   const handleDelete = async (id: number) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este módulo?')) {
       try {
         await deleteModule(id);
-        loadModules(currentPage);
+        fetchModules();
       } catch (error) {
         console.error('Error eliminando módulo:', error);
       }
     }
   };
 
+  const orderOptions = Array.from(new Set(allModules.map(m => m.moduleOrder).filter(Boolean)));
+  const numberOptions = Array.from(new Set(allModules.map(m => m.numberModule).filter(Boolean)));
+
+  const filteredModules = allModules.filter((mod) => {
+    const matchesSearch =
+      mod.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      mod.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesOrder =
+      orderFilter === 'all' || mod.moduleOrder === parseInt(orderFilter);
+
+    const matchesNumber =
+      numberFilter === 'all' || mod.numberModule === numberFilter;
+
+    return matchesSearch && matchesOrder && matchesNumber;
+  });
+
+  const paginatedModules = filteredModules.slice(
+    currentPage * itemsPerPage,
+    currentPage * itemsPerPage + itemsPerPage
+  );
+
   return (
     <Box sx={{ p: 3 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Módulos
-        </Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Typography variant="h4">Módulos</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -73,6 +100,46 @@ export default function Modules() {
         </Button>
       </Stack>
 
+      {/* Filtros */}
+      <Stack direction="row" spacing={2} mb={3} flexWrap="wrap">
+        <TextField
+          label="Buscar"
+          variant="outlined"
+          size="small"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Orden</InputLabel>
+          <Select
+            value={orderFilter}
+            label="Orden"
+            onChange={(e) => setOrderFilter(e.target.value)}
+          >
+            <MenuItem value="all">Todos</MenuItem>
+            {orderOptions.map((order, i) => (
+              <MenuItem key={i} value={order}>{order}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Número</InputLabel>
+          <Select
+            value={numberFilter}
+            label="Número"
+            onChange={(e) => setNumberFilter(e.target.value)}
+          >
+            <MenuItem value="all">Todos</MenuItem>
+            {numberOptions.map((num, i) => (
+              <MenuItem key={i} value={num}>{num}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Stack>
+
+      {/* Tabla */}
       <Card>
         <CardContent>
           <TableContainer component={Paper}>
@@ -87,14 +154,14 @@ export default function Modules() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {modules.map((mod) => (
+                {paginatedModules.map((mod) => (
                   <TableRow key={mod.idModule}>
                     <TableCell>{mod.name}</TableCell>
                     <TableCell>{mod.description}</TableCell>
                     <TableCell>{mod.moduleOrder}</TableCell>
                     <TableCell>{mod.numberModule}</TableCell>
                     <TableCell>
-                      <IconButton onClick={() => handleEdit(mod.idModule)} color="primary">
+                      <IconButton onClick={() => navigate(`/modules/edit/${mod.idModule}`)} color="primary">
                         <EditIcon />
                       </IconButton>
                       <IconButton onClick={() => handleDelete(mod.idModule)} color="error">
@@ -109,9 +176,10 @@ export default function Modules() {
         </CardContent>
       </Card>
 
+      {/* Paginación */}
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
         <Pagination
-          count={totalPages}
+          count={Math.ceil(filteredModules.length / itemsPerPage)}
           page={currentPage + 1}
           onChange={(e, value) => setCurrentPage(value - 1)}
           color="primary"

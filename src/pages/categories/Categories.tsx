@@ -19,39 +19,53 @@ import {
   Stack,
   Tooltip,
   Pagination,
+  TextField,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
 export default function Categories() {
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 5;
 
-  useEffect(() => {
-    fetchCategories(currentPage);
-  }, [currentPage]);
-
-  const fetchCategories = async (page: number) => {
+  const fetchCategories = async () => {
     try {
-      const response = await getCategoriesPagination(page, itemsPerPage);
-      setCategories(response.data.content);
-      setTotalPages(response.data.totalPages);
-      setCurrentPage(response.data.number);
+      const response = await getCategoriesPagination(0, 1000); // traemos todas para filtrar localmente
+      setAllCategories(response.data.content || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
   };
 
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm]);
+
   const handleDelete = async (id: number) => {
     try {
       await deleteCategory(id);
-      fetchCategories(currentPage);
+      fetchCategories();
     } catch (error) {
       console.error('Error deleting category:', error);
     }
   };
+
+  const filteredCategories = allCategories.filter((category) =>
+    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (category.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const paginatedCategories = filteredCategories.slice(
+    currentPage * itemsPerPage,
+    currentPage * itemsPerPage + itemsPerPage
+  );
 
   return (
     <Box sx={{ p: 3 }}>
@@ -69,6 +83,18 @@ export default function Categories() {
         </Button>
       </Box>
 
+      {/* Filtro de búsqueda */}
+      <Box sx={{ mb: 3, maxWidth: 300 }}>
+        <TextField
+          label="Buscar por nombre o descripción"
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </Box>
+
       <Card>
         <CardContent>
           <TableContainer component={Paper}>
@@ -81,7 +107,7 @@ export default function Categories() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {categories.map((category) => (
+                {paginatedCategories.map((category) => (
                   <TableRow key={category.idCategory} hover>
                     <TableCell>{category.name}</TableCell>
                     <TableCell>{category.description || 'Sin descripción'}</TableCell>
@@ -113,7 +139,7 @@ export default function Categories() {
 
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
             <Pagination
-              count={totalPages}
+              count={Math.ceil(filteredCategories.length / itemsPerPage)}
               page={currentPage + 1}
               onChange={(e, value) => setCurrentPage(value - 1)}
               color="primary"

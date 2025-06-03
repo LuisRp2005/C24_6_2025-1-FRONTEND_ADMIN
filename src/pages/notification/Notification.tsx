@@ -16,28 +16,45 @@ import {
   IconButton,
   Stack,
   Pagination,
+  TextField,
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
-import { getNotificationsPagination, deleteNotification } from '../../services/notificacionService';
+import {
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Add as AddIcon,
+} from '@mui/icons-material';
+
+import {
+  getNotificationsPagination,
+  deleteNotification,
+  sendTutorTip,
+  sendTutorRecommendation,
+  sendMotivationalNotification,
+  sendDailyChallenge,
+  sendCourseProgress,
+} from '../../services/notificacionService';
+
 import { Notification } from '../../models/Notification';
 
 export default function Notifications() {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
+  const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 5;
 
   useEffect(() => {
-    loadNotifications(currentPage);
-  }, [currentPage]);
+    fetchNotifications();
+  }, []);
 
-  const loadNotifications = async (page: number) => {
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm]);
+
+  const fetchNotifications = async () => {
     try {
-      const response = await getNotificationsPagination(page, itemsPerPage);
-      setNotifications(response.data.content);
-      setTotalPages(response.data.totalPages);
-      setCurrentPage(response.data.number);
+      const response = await getNotificationsPagination(0, 1000);
+      setAllNotifications(response.data.content || []);
     } catch (error) {
       console.error('Error cargando notificaciones:', error);
     }
@@ -51,19 +68,57 @@ export default function Notifications() {
     if (window.confirm('¿Estás seguro de que deseas eliminar esta notificación?')) {
       try {
         await deleteNotification(id);
-        await loadNotifications(currentPage);
+        fetchNotifications();
       } catch (error) {
         console.error('Error eliminando notificación:', error);
       }
     }
   };
 
+  const handleQuickSend = async (type: string) => {
+    try {
+      switch (type) {
+        case 'tutor-tip':
+          await sendTutorTip();
+          break;
+        case 'tutor-recommendation':
+          await sendTutorRecommendation();
+          break;
+        case 'motivational':
+          await sendMotivationalNotification();
+          break;
+        case 'daily-challenge':
+          await sendDailyChallenge();
+          break;
+        case 'course-progress':
+          await sendCourseProgress();
+          break;
+      }
+  
+      alert('✅ Notificación enviada con éxito');
+      fetchNotifications();
+  
+    } catch (error) {
+      console.error('Error enviando notificación rápida:', error);
+      alert('❌ Error al enviar la notificación');
+    }
+  };
+
+  const filteredNotifications = allNotifications.filter((n) =>
+    n.notificationType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    n.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    n.user?.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const paginatedNotifications = filteredNotifications.slice(
+    currentPage * itemsPerPage,
+    currentPage * itemsPerPage + itemsPerPage
+  );
+
   return (
     <Box sx={{ p: 3 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Notificaciones
-        </Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Typography variant="h4" component="h1">Notificaciones</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -73,6 +128,28 @@ export default function Notifications() {
         </Button>
       </Stack>
 
+      {/* Botones rápidos */}
+      <Stack direction="row" spacing={1} mb={2} flexWrap="wrap">
+        <Button variant="outlined" onClick={() => handleQuickSend('tutor-tip')}>Tutor Tip</Button>
+        <Button variant="outlined" onClick={() => handleQuickSend('tutor-recommendation')}>Recomendación</Button>
+        <Button variant="outlined" onClick={() => handleQuickSend('motivational')}>Motivacional</Button>
+        <Button variant="outlined" onClick={() => handleQuickSend('daily-challenge')}>Desafío Diario</Button>
+        <Button variant="outlined" onClick={() => handleQuickSend('course-progress')}>Progreso Curso</Button>
+      </Stack>
+
+      {/* Filtro de búsqueda */}
+      <Box sx={{ mb: 2, maxWidth: 300 }}>
+        <TextField
+          label="Buscar notificación"
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </Box>
+
+      {/* Tabla de notificaciones */}
       <Card>
         <CardContent>
           <TableContainer component={Paper}>
@@ -86,11 +163,11 @@ export default function Notifications() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {notifications.map((notification) => (
+                {paginatedNotifications.map((notification) => (
                   <TableRow key={notification.idNotification}>
                     <TableCell>{notification.notificationType}</TableCell>
                     <TableCell>{notification.message}</TableCell>
-                    <TableCell>{notification.user.name}</TableCell>
+                    <TableCell>{notification.user?.name}</TableCell>
                     <TableCell>
                       <IconButton onClick={() => handleEdit(notification.idNotification)} color="primary">
                         <EditIcon />
@@ -105,9 +182,10 @@ export default function Notifications() {
             </Table>
           </TableContainer>
 
+          {/* Paginación */}
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
             <Pagination
-              count={totalPages}
+              count={Math.ceil(filteredNotifications.length / itemsPerPage)}
               page={currentPage + 1}
               onChange={(e, value) => setCurrentPage(value - 1)}
               color="primary"

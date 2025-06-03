@@ -52,7 +52,7 @@ import {
       e.preventDefault();
       try {
         await updateNotification(Number(id), notification as Notification);
-        navigate('/notification');
+        navigate('/notifications');
       } catch (error) {
         console.error('Error al actualizar la notificación:', error);
       }
