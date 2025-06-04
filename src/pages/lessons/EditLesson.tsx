@@ -40,18 +40,22 @@ export default function EditLesson() {
   const [moduloNombreActual, setModuloNombreActual] = useState('');
 
   useEffect(() => {
-    getCourses().then((res) => setCourses(res.data)).catch(console.error);
+    getCourses()
+      .then((res) => setCourses(res.data))
+      .catch(console.error);
 
     if (id) {
-      getLessonById(Number(id)).then((res) => {
-        setLesson(res.data);
-        setImagePreview(res.data.imageLesson);
-        if (res.data.idModule) {
-          getModuleById(res.data.idModule).then((mod) => {
-            setModuloNombreActual(mod.data.name);
-          });
-        }
-      }).catch(console.error);
+      getLessonById(Number(id))
+        .then((res) => {
+          setLesson(res.data);
+          setImagePreview(res.data.imageLesson);
+          if (res.data.idModule) {
+            getModuleById(res.data.idModule).then((mod) => {
+              setModuloNombreActual(mod.data.name);
+            });
+          }
+        })
+        .catch(console.error);
     }
   }, [id]);
 
@@ -127,7 +131,14 @@ export default function EditLesson() {
             <Box component="form" onSubmit={handleSubmit}>
               <Stack spacing={3}>
                 <Box sx={{ display: 'flex', gap: 2 }}>
-                  <TextField label="Título" name="title" value={lesson.title || ''} onChange={handleChange} fullWidth required />
+                  <TextField
+                    label="Título"
+                    name="title"
+                    value={lesson.title || ''}
+                    onChange={handleChange}
+                    fullWidth
+                    required
+                  />
                   <TextField
                     label="Duración (HH:MM:SS)"
                     name="duration"
@@ -303,7 +314,9 @@ export default function EditLesson() {
                   <Button type="submit" variant="contained" color="primary" disabled={loading}>
                     {loading ? <CircularProgress size={24} color="inherit" /> : 'Actualizar Lección'}
                   </Button>
-                  <Button variant="outlined" onClick={() => navigate('/lessons')}>Cancelar</Button>
+                  <Button variant="outlined" onClick={() => navigate('/lessons')}>
+                    Cancelar
+                  </Button>
                 </Stack>
               </Stack>
             </Box>

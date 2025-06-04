@@ -10,7 +10,9 @@ import {
   Stack,
   MenuItem,
   Divider,
-  CircularProgress
+  CircularProgress,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import { getCourses } from '../../services/courseService';
 import { getModulesByCourseId } from '../../services/moduleService';
@@ -45,6 +47,13 @@ export default function CreateLesson() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [detectingDuration, setDetectingDuration] = useState(false);
+  const [showFileAlert, setShowFileAlert] = useState(false);
+
+  const [fileErrors, setFileErrors] = useState({
+    image: false,
+    video: false,
+    pdf: false
+  });
 
   const [lesson, setLesson] = useState<Partial<CreateLessonPayload>>({
     title: '',
@@ -79,17 +88,24 @@ export default function CreateLesson() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!imageFile || !videoFile || !pdfFile || !lesson.idModule) {
-      console.error('Faltan archivos o módulo');
+    const errors = {
+      image: !imageFile,
+      video: !videoFile,
+      pdf: !pdfFile
+    };
+    setFileErrors(errors);
+
+    if (Object.values(errors).some((v) => v) || !lesson.idModule) {
+      setShowFileAlert(true);
       return;
     }
 
     try {
       setLoading(true);
       const [imageUrl, videoUrl, pdfUrl] = await Promise.all([
-        uploadToCloudinary(imageFile),
-        uploadToCloudinary(videoFile),
-        uploadToCloudinary(pdfFile)
+        uploadToCloudinary(imageFile!),
+        uploadToCloudinary(videoFile!),
+        uploadToCloudinary(pdfFile!)
       ]);
 
       const payload: CreateLessonPayload = {
@@ -108,9 +124,8 @@ export default function CreateLesson() {
       navigate('/lessons');
     } catch (error) {
       const axiosError = error as AxiosError;
-      console.error('Error creando lección:', axiosError.message);
       if (axiosError.response) {
-        console.error('Detalles:', axiosError.response.data);
+        console.error('Detalles del error:', axiosError.response.data);
       }
     } finally {
       setLoading(false);
@@ -254,7 +269,6 @@ export default function CreateLesson() {
                         type="file"
                         accept="image/*"
                         hidden
-                        required
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
@@ -267,6 +281,11 @@ export default function CreateLesson() {
                         Subir Imagen
                       </Button>
                     </label>
+                    {fileErrors.image && (
+                      <Typography variant="caption" color="error">
+                        La imagen es obligatoria.
+                      </Typography>
+                    )}
                   </Box>
 
                   {/* Video */}
@@ -280,7 +299,6 @@ export default function CreateLesson() {
                         type="file"
                         accept="video/*"
                         hidden
-                        required
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
@@ -292,13 +310,11 @@ export default function CreateLesson() {
                                 ...prev,
                                 duration: response.data
                               }));
-                            } catch (err) {
-                              console.error('Error detectando duración del video', err);
+                            } catch {
+                              setLesson((prev) => ({ ...prev, duration: '' }));
                             } finally {
                               setDetectingDuration(false);
                             }
-                          } else {
-                            setLesson((prev) => ({ ...prev, duration: '' }));
                           }
                         }}
                       />
@@ -306,6 +322,16 @@ export default function CreateLesson() {
                         Subir Video
                       </Button>
                     </label>
+                    {videoFile && (
+                      <Typography variant="caption" color="text.secondary">
+                        {videoFile.name}
+                      </Typography>
+                    )}
+                    {fileErrors.video && (
+                      <Typography variant="caption" color="error">
+                        El video es obligatorio.
+                      </Typography>
+                    )}
                   </Box>
 
                   {/* PDF */}
@@ -319,7 +345,6 @@ export default function CreateLesson() {
                         type="file"
                         accept="application/pdf"
                         hidden
-                        required
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) setPdfFile(file);
@@ -329,6 +354,16 @@ export default function CreateLesson() {
                         Subir PDF
                       </Button>
                     </label>
+                    {pdfFile && (
+                      <Typography variant="caption" color="text.secondary">
+                        {pdfFile.name}
+                      </Typography>
+                    )}
+                    {fileErrors.pdf && (
+                      <Typography variant="caption" color="error">
+                        El archivo PDF es obligatorio.
+                      </Typography>
+                    )}
                   </Box>
                 </Box>
 
@@ -345,6 +380,17 @@ export default function CreateLesson() {
           )}
         </CardContent>
       </Card>
+
+      <Snackbar
+        open={showFileAlert}
+        autoHideDuration={3000}
+        onClose={() => setShowFileAlert(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setShowFileAlert(false)} severity="warning" sx={{ width: '100%' }}>
+          Debes seleccionar imagen, video y PDF antes de continuar.
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
