@@ -22,6 +22,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { deleteLesson, getLessonsPagination } from '../../services/lessonService';
@@ -37,6 +38,7 @@ export default function Lessons() {
   const [allLessons, setAllLessons] = useState<Lesson[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('all');
@@ -46,6 +48,7 @@ export default function Lessons() {
   const itemsPerPage = 5;
 
   const fetchAllData = async () => {
+    setLoading(true);
     try {
       const [lessonRes, moduleRes, courseRes] = await Promise.all([
         getLessonsPagination(0, 1000),
@@ -57,6 +60,8 @@ export default function Lessons() {
       setCourses(courseRes.data || []);
     } catch (error) {
       console.error('Error cargando datos:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -173,61 +178,68 @@ export default function Lessons() {
         </FormControl>
       </Stack>
 
-      {/* Tabla */}
-      <Card>
-        <CardContent>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Imagen</TableCell>
-                  <TableCell>Título</TableCell>
-                  <TableCell>Descripción</TableCell>
-                  <TableCell>Duración</TableCell>
-                  <TableCell>Módulo</TableCell>
-                  <TableCell>Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedLessons.map((lesson) => (
-                  <TableRow key={lesson.idLesson}>
-                    <TableCell>
-                      <Avatar
-                        variant="rounded"
-                        src={lesson.imageLesson}
-                        alt={lesson.title}
-                        sx={{ width: 56, height: 56 }}
-                      />
-                    </TableCell>
-                    <TableCell>{lesson.title}</TableCell>
-                    <TableCell>{lesson.description}</TableCell>
-                    <TableCell>{lesson.duration}</TableCell>
-                    <TableCell>{getModuleName(lesson.idModule)}</TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleEdit(lesson.idLesson)} color="primary">
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(lesson.idLesson)} color="error">
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
+      {/* Tabla o Cargando */}
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 5 }}>
+          <CircularProgress />
+          <Typography sx={{ ml: 2 }}>Cargando lecciones...</Typography>
+        </Box>
+      ) : (
+        <Card>
+          <CardContent>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Imagen</TableCell>
+                    <TableCell>Título</TableCell>
+                    <TableCell>Descripción</TableCell>
+                    <TableCell>Duración</TableCell>
+                    <TableCell>Módulo</TableCell>
+                    <TableCell>Acciones</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {paginatedLessons.map((lesson) => (
+                    <TableRow key={lesson.idLesson}>
+                      <TableCell>
+                        <Avatar
+                          variant="rounded"
+                          src={lesson.imageLesson}
+                          alt={lesson.title}
+                          sx={{ width: 56, height: 56 }}
+                        />
+                      </TableCell>
+                      <TableCell>{lesson.title}</TableCell>
+                      <TableCell>{lesson.description}</TableCell>
+                      <TableCell>{lesson.duration}</TableCell>
+                      <TableCell>{getModuleName(lesson.idModule)}</TableCell>
+                      <TableCell>
+                        <IconButton onClick={() => handleEdit(lesson.idLesson)} color="primary">
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton onClick={() => handleDelete(lesson.idLesson)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-          {/* Paginación */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <Pagination
-              count={Math.ceil(filteredLessons.length / itemsPerPage)}
-              page={currentPage + 1}
-              onChange={(e, value) => setCurrentPage(value - 1)}
-              color="primary"
-            />
-          </Box>
-        </CardContent>
-      </Card>
+            {/* Paginación */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+              <Pagination
+                count={Math.ceil(filteredLessons.length / itemsPerPage)}
+                page={currentPage + 1}
+                onChange={(e, value) => setCurrentPage(value - 1)}
+                color="primary"
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      )}
     </Box>
   );
 }

@@ -24,6 +24,7 @@ import {
   Select,
   InputLabel,
   FormControl,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -33,6 +34,7 @@ import {
 
 export default function Courses() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [levelFilter, setLevelFilter] = useState<'all' | 1 | 2 | 3>('all');
@@ -43,6 +45,7 @@ export default function Courses() {
   const navigate = useNavigate();
 
   const fetchCourses = async () => {
+    setLoading(true);
     try {
       const response = await getCoursesPagination(0, 1000);
       const data = response.data;
@@ -50,6 +53,8 @@ export default function Courses() {
     } catch (error) {
       console.error('Error fetching courses:', error);
       setCourses([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -184,91 +189,101 @@ export default function Courses() {
         </FormControl>
       </Stack>
 
-      {/* Tabla */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Imagen</TableCell>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Autor</TableCell>
-              <TableCell>Precio</TableCell>
-              <TableCell>Nivel</TableCell>
-              <TableCell>Categoría</TableCell>
-              <TableCell>Estado</TableCell>
-              <TableCell align="right">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginatedCourses.map((course) => (
-              <TableRow key={course.idCourse} hover>
-                <TableCell>
-                  <CardMedia
-                    component="img"
-                    sx={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 1 }}
-                    image={course.imageProfile}
-                    alt={course.name}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Typography variant="subtitle1">{course.name}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {course.description?.substring(0, 50)}...
-                  </Typography>
-                </TableCell>
-                <TableCell>{course.authorName}</TableCell>
-                <TableCell>s/{course.price}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={course.level?.name || 'Sin nivel'}
-                    color={
-                      course.level?.idLevel === 1 ? 'success'
-                        : course.level?.idLevel === 2 ? 'warning'
-                        : course.level?.idLevel === 3 ? 'error'
-                        : 'default'
-                    }
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip label={course.category?.name || 'Sin categoría'} color="info" size="small" />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={course.status ? 'Activo' : 'Inactivo'}
-                    color={course.status ? 'success' : 'error'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <Stack direction="row" spacing={1} justifyContent="flex-end">
-                    <Tooltip title="Editar">
-                      <IconButton color="primary" onClick={() => navigate(`/courses/edit/${course.idCourse}`)}>
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Eliminar">
-                      <IconButton color="error" onClick={() => handleDelete(course.idCourse)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {/* Indicador de carga */}
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
+          <CircularProgress />
+          <Typography sx={{ ml: 2, mt: 0.5 }}>Cargando cursos...</Typography>
+        </Box>
+      ) : (
+        <>
+          {/* Tabla */}
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Imagen</TableCell>
+                  <TableCell>Nombre</TableCell>
+                  <TableCell>Autor</TableCell>
+                  <TableCell>Precio</TableCell>
+                  <TableCell>Nivel</TableCell>
+                  <TableCell>Categoría</TableCell>
+                  <TableCell>Estado</TableCell>
+                  <TableCell align="right">Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedCourses.map((course) => (
+                  <TableRow key={course.idCourse} hover>
+                    <TableCell>
+                      <CardMedia
+                        component="img"
+                        sx={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 1 }}
+                        image={course.imageProfile}
+                        alt={course.name}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="subtitle1">{course.name}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {course.description?.substring(0, 50)}...
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{course.authorName}</TableCell>
+                    <TableCell>s/{course.price}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={course.level?.name || 'Sin nivel'}
+                        color={
+                          course.level?.idLevel === 1 ? 'success'
+                            : course.level?.idLevel === 2 ? 'warning'
+                            : course.level?.idLevel === 3 ? 'error'
+                            : 'default'
+                        }
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip label={course.category?.name || 'Sin categoría'} color="info" size="small" />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={course.status ? 'Activo' : 'Inactivo'}
+                        color={course.status ? 'success' : 'error'}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <Tooltip title="Editar">
+                          <IconButton color="primary" onClick={() => navigate(`/courses/edit/${course.idCourse}`)}>
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Eliminar">
+                          <IconButton color="error" onClick={() => handleDelete(course.idCourse)}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-      {/* Paginación */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-        <Pagination
-          count={Math.ceil(sortedCourses.length / itemsPerPage)}
-          page={currentPage + 1}
-          onChange={(e, value) => setCurrentPage(value - 1)}
-          color="primary"
-        />
-      </Box>
+          {/* Paginación */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <Pagination
+              count={Math.ceil(sortedCourses.length / itemsPerPage)}
+              page={currentPage + 1}
+              onChange={(e, value) => setCurrentPage(value - 1)}
+              color="primary"
+            />
+          </Box>
+        </>
+      )}
     </Box>
   );
 }

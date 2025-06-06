@@ -20,6 +20,7 @@ import {
   Tooltip,
   Pagination,
   TextField,
+  CircularProgress,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
@@ -29,14 +30,18 @@ export default function Categories() {
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 5;
 
   const fetchCategories = async () => {
+    setLoading(true);
     try {
       const response = await getCategoriesPagination(0, 1000); // traemos todas para filtrar localmente
       setAllCategories(response.data.content || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,58 +100,65 @@ export default function Categories() {
         />
       </Box>
 
-      <Card>
-        <CardContent>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Nombre</TableCell>
-                  <TableCell>Descripción</TableCell>
-                  <TableCell align="right">Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedCategories.map((category) => (
-                  <TableRow key={category.idCategory} hover>
-                    <TableCell>{category.name}</TableCell>
-                    <TableCell>{category.description || 'Sin descripción'}</TableCell>
-                    <TableCell align="right">
-                      <Stack direction="row" spacing={1} justifyContent="flex-end">
-                        <Tooltip title="Editar">
-                          <IconButton
-                            color="primary"
-                            onClick={() => navigate(`/categories/edit/${category.idCategory}`)}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Eliminar">
-                          <IconButton
-                            color="error"
-                            onClick={() => handleDelete(category.idCategory)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Stack>
-                    </TableCell>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
+          <CircularProgress />
+          <Typography sx={{ ml: 2 }}>Cargando categorías...</Typography>
+        </Box>
+      ) : (
+        <Card>
+          <CardContent>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Nombre</TableCell>
+                    <TableCell>Descripción</TableCell>
+                    <TableCell align="right">Acciones</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {paginatedCategories.map((category) => (
+                    <TableRow key={category.idCategory} hover>
+                      <TableCell>{category.name}</TableCell>
+                      <TableCell>{category.description || 'Sin descripción'}</TableCell>
+                      <TableCell align="right">
+                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                          <Tooltip title="Editar">
+                            <IconButton
+                              color="primary"
+                              onClick={() => navigate(`/categories/edit/${category.idCategory}`)}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Eliminar">
+                            <IconButton
+                              color="error"
+                              onClick={() => handleDelete(category.idCategory)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <Pagination
-              count={Math.ceil(filteredCategories.length / itemsPerPage)}
-              page={currentPage + 1}
-              onChange={(e, value) => setCurrentPage(value - 1)}
-              color="primary"
-            />
-          </Box>
-        </CardContent>
-      </Card>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+              <Pagination
+                count={Math.ceil(filteredCategories.length / itemsPerPage)}
+                page={currentPage + 1}
+                onChange={(e, value) => setCurrentPage(value - 1)}
+                color="primary"
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      )}
     </Box>
   );
 }

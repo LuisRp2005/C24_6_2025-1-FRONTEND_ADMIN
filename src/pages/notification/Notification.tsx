@@ -17,6 +17,7 @@ import {
   Stack,
   Pagination,
   TextField,
+  CircularProgress,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -41,6 +42,7 @@ export default function Notifications() {
   const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -52,11 +54,14 @@ export default function Notifications() {
   }, [searchTerm]);
 
   const fetchNotifications = async () => {
+    setLoading(true);
     try {
       const response = await getNotificationsPagination(0, 1000);
       setAllNotifications(response.data.content || []);
     } catch (error) {
       console.error('Error cargando notificaciones:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,10 +99,9 @@ export default function Notifications() {
           await sendCourseProgress();
           break;
       }
-  
+
       alert('✅ Notificación enviada con éxito');
       fetchNotifications();
-  
     } catch (error) {
       console.error('Error enviando notificación rápida:', error);
       alert('❌ Error al enviar la notificación');
@@ -149,50 +153,57 @@ export default function Notifications() {
         />
       </Box>
 
-      {/* Tabla de notificaciones */}
-      <Card>
-        <CardContent>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Tipo</TableCell>
-                  <TableCell>Mensaje</TableCell>
-                  <TableCell>Usuario</TableCell>
-                  <TableCell>Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedNotifications.map((notification) => (
-                  <TableRow key={notification.idNotification}>
-                    <TableCell>{notification.notificationType}</TableCell>
-                    <TableCell>{notification.message}</TableCell>
-                    <TableCell>{notification.user?.name}</TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleEdit(notification.idNotification)} color="primary">
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(notification.idNotification)} color="error">
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
+      {/* Tabla o carga */}
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
+          <CircularProgress />
+          <Typography sx={{ ml: 2 }}>Cargando notificaciones...</Typography>
+        </Box>
+      ) : (
+        <Card>
+          <CardContent>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Tipo</TableCell>
+                    <TableCell>Mensaje</TableCell>
+                    <TableCell>Usuario</TableCell>
+                    <TableCell>Acciones</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {paginatedNotifications.map((notification) => (
+                    <TableRow key={notification.idNotification}>
+                      <TableCell>{notification.notificationType}</TableCell>
+                      <TableCell>{notification.message}</TableCell>
+                      <TableCell>{notification.user?.name}</TableCell>
+                      <TableCell>
+                        <IconButton onClick={() => handleEdit(notification.idNotification)} color="primary">
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton onClick={() => handleDelete(notification.idNotification)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-          {/* Paginación */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <Pagination
-              count={Math.ceil(filteredNotifications.length / itemsPerPage)}
-              page={currentPage + 1}
-              onChange={(e, value) => setCurrentPage(value - 1)}
-              color="primary"
-            />
-          </Box>
-        </CardContent>
-      </Card>
+            {/* Paginación */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+              <Pagination
+                count={Math.ceil(filteredNotifications.length / itemsPerPage)}
+                page={currentPage + 1}
+                onChange={(e, value) => setCurrentPage(value - 1)}
+                color="primary"
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      )}
     </Box>
   );
 }

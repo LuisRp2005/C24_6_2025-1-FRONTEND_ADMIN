@@ -21,6 +21,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { getModulePagination, deleteModule } from '../../services/moduleService';
@@ -34,15 +35,19 @@ export default function Modules() {
   const [orderFilter, setOrderFilter] = useState('all');
   const [numberFilter, setNumberFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(0);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 5;
 
   const fetchModules = async () => {
+    setLoading(true);
     try {
       const response = await getModulePagination(0, 1000);
       const data = response.data.content || [];
       setAllModules(data);
     } catch (error) {
       console.error('Error cargando módulos:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -139,52 +144,61 @@ export default function Modules() {
         </FormControl>
       </Stack>
 
-      {/* Tabla */}
-      <Card>
-        <CardContent>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Nombre</TableCell>
-                  <TableCell>Descripción</TableCell>
-                  <TableCell>Orden del Módulo</TableCell>
-                  <TableCell>Número del Módulo</TableCell>
-                  <TableCell>Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedModules.map((mod) => (
-                  <TableRow key={mod.idModule}>
-                    <TableCell>{mod.name}</TableCell>
-                    <TableCell>{mod.description}</TableCell>
-                    <TableCell>{mod.moduleOrder}</TableCell>
-                    <TableCell>{mod.numberModule}</TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => navigate(`/modules/edit/${mod.idModule}`)} color="primary">
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(mod.idModule)} color="error">
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
+      {/* Tabla o Cargando */}
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 5 }}>
+          <CircularProgress />
+          <Typography sx={{ ml: 2 }}>Cargando módulos...</Typography>
+        </Box>
+      ) : (
+        <>
+          <Card>
+            <CardContent>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Nombre</TableCell>
+                      <TableCell>Descripción</TableCell>
+                      <TableCell>Orden del Módulo</TableCell>
+                      <TableCell>Número del Módulo</TableCell>
+                      <TableCell>Acciones</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {paginatedModules.map((mod) => (
+                      <TableRow key={mod.idModule}>
+                        <TableCell>{mod.name}</TableCell>
+                        <TableCell>{mod.description}</TableCell>
+                        <TableCell>{mod.moduleOrder}</TableCell>
+                        <TableCell>{mod.numberModule}</TableCell>
+                        <TableCell>
+                          <IconButton onClick={() => navigate(`/modules/edit/${mod.idModule}`)} color="primary">
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton onClick={() => handleDelete(mod.idModule)} color="error">
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
 
-      {/* Paginación */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-        <Pagination
-          count={Math.ceil(filteredModules.length / itemsPerPage)}
-          page={currentPage + 1}
-          onChange={(e, value) => setCurrentPage(value - 1)}
-          color="primary"
-        />
-      </Box>
+          {/* Paginación */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <Pagination
+              count={Math.ceil(filteredModules.length / itemsPerPage)}
+              page={currentPage + 1}
+              onChange={(e, value) => setCurrentPage(value - 1)}
+              color="primary"
+            />
+          </Box>
+        </>
+      )}
     </Box>
   );
 }
