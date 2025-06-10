@@ -40,6 +40,11 @@ export const deleteCourse = (id: number) => API.delete(`/courses/${id}`, {
   }
 });
 
-
+export const getTop10Courses = () =>
+  API.get('/courses/sections', {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`
+    }
+  });
 
 

@@ -13,7 +13,7 @@ import html2canvas from 'html2canvas';
 import { useNavigate } from 'react-router-dom';
 
 import { getUsers, getCurrentUser } from '../services/userService';
-import { getCourses } from '../services/courseService';
+import { getCourses, getTop10Courses } from '../services/courseService';
 import { getLessons } from '../services/lessonService';
 import { getCategories } from '../services/categoryservice';
 import { getModule } from '../services/moduleService';
@@ -44,6 +44,7 @@ const Dashboard: React.FC = () => {
   const [adminName, setAdminName] = useState('');
   const navigate = useNavigate();
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
+  const [top10Courses, setTop10Courses] = useState<any[]>([]);
 
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -57,42 +58,20 @@ const Dashboard: React.FC = () => {
   const [levelData, setLevelData] = useState<any[]>([]);
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
 
-  const handleDownloadPDF = () => {
-    const input = document.getElementById('dashboard-pdf');
-    if (!input) return;
-
-    html2canvas(input, { scale: 2 }).then((canvas) => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const date = new Date().toLocaleString('es-PE');
-
-      pdf.addImage(logo, 'PNG', pdfWidth / 2 - 25, 5, 50, 15);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(14);
-      pdf.text('REPORTE DE ADMINISTRACIÓN - Plataforma Cursos', pdfWidth / 2, 25, { align: 'center' });
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Generado: ${date}`, pdfWidth / 2, 30, { align: 'center' });
-      pdf.text(`Administrador: ${adminName}`, pdfWidth / 2, 35, { align: 'center' });
-
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      pdf.addImage(imgData, 'PNG', 0, 40, pdfWidth, pdfHeight);
-      pdf.save('reporte-dashboard.pdf');
-    });
-  };
-
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [usersRes, coursesRes, lessonsRes, categoriesRes, modulesRes, currentUser] = await Promise.all([
+        const [
+          usersRes, coursesRes, lessonsRes, categoriesRes,
+          modulesRes, currentUser, topCoursesRes
+        ] = await Promise.all([
           getUsers(),
           getCourses(),
           getLessons(),
           getCategories(),
           getModule(),
           getCurrentUser(),
+          getTop10Courses()
         ]);
 
         const users = usersRes.data;
@@ -102,8 +81,8 @@ const Dashboard: React.FC = () => {
         const modules = modulesRes.data;
 
         setAdminName(`${currentUser.data.name} ${currentUser.data.lastName}`);
+        setTop10Courses(topCoursesRes.data.top10);
 
-        // Usuarios registrados hoy
         const today = new Date().toISOString().split('T')[0];
         const usersToday = users
           .filter((u: any) => u.registerDate?.startsWith(today))
@@ -112,7 +91,6 @@ const Dashboard: React.FC = () => {
 
         setRecentUsers(usersToday);
 
-        // Cursos por categoría
         const byCategory = courses.reduce((acc: any, course: Course) => {
           const id = course.category?.idCategory;
           if (id) acc[id] = (acc[id] || 0) + 1;
@@ -123,7 +101,6 @@ const Dashboard: React.FC = () => {
           return { name: cat?.name || `Categoría ${catId}`, value: count };
         });
 
-        // Cursos por nivel
         const byLevel = courses.reduce((acc: any, course: Course) => {
           const name = course.level?.name;
           if (name) acc[name] = (acc[name] || 0) + 1;
@@ -131,7 +108,6 @@ const Dashboard: React.FC = () => {
         }, {});
         const levelFormatted = Object.entries(byLevel).map(([name, count]: any) => ({ name, cantidad: count }));
 
-        // Cursos por mes
         const monthly: any = {};
         courses.forEach((course: Course) => {
           const month = new Date(course.uploadDate).toLocaleDateString('es-PE', { month: 'short', year: 'numeric' });
@@ -186,7 +162,7 @@ const Dashboard: React.FC = () => {
         </button>
       </Box>
 
-      <Box id="dashboard-pdf" sx={{ p: 2, backgroundColor: 'white' }}>
+      <Box id="dashboard-pdf" sx={{ p: 2, bgcolor: 'background.default' }}>
         {/* Tarjetas */}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'space-between' }}>
           <Box sx={{ cursor: 'pointer' }} onClick={() => navigate('/users')}>
@@ -204,6 +180,32 @@ const Dashboard: React.FC = () => {
           <Box sx={{ cursor: 'pointer' }} onClick={() => navigate('/categories')}>
             <StatCard title="Categorías" value={stats.totalCategories} icon={<CategoryIcon />} color="#ff7043" loading={loading} />
           </Box>
+        </Box>
+
+        {/* Top 10 Cursos */}
+        <Box sx={{ width: '100%', mt: 4 }}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Top 10 Cursos Más Populares</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 2 }}>
+                {top10Courses.map((course: any, index: number) => (
+                  <Card key={index} variant="outlined" sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
+                    <Typography variant="h6" sx={{ width: 30 }}>
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
+                    </Typography>
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                        {course.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Autor: {course.authorName} | Nivel: {course.level} | Categoría: {course.category}
+                      </Typography>
+                    </Box>
+                  </Card>
+                ))}
+              </Box>
+            </CardContent>
+          </Card>
         </Box>
 
         {/* Últimos usuarios */}
