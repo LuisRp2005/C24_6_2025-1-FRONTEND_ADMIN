@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useNavigate } from 'react-router-dom';
 
 import { getUsers, getCurrentUser } from '../services/userService';
 import { getCourses } from '../services/courseService';
@@ -41,6 +42,9 @@ const StatCard = ({ title, value, icon, color, loading }: any) => (
 const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState('');
+  const navigate = useNavigate();
+  const [recentUsers, setRecentUsers] = useState<any[]>([]);
+
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalCourses: 0,
@@ -99,6 +103,16 @@ const Dashboard: React.FC = () => {
 
         setAdminName(`${currentUser.data.name} ${currentUser.data.lastName}`);
 
+        // Usuarios registrados hoy
+        const today = new Date().toISOString().split('T')[0];
+        const usersToday = users
+          .filter((u: any) => u.registerDate?.startsWith(today))
+          .sort((a: any, b: any) => new Date(b.registerDate).getTime() - new Date(a.registerDate).getTime())
+          .slice(0, 3);
+
+        setRecentUsers(usersToday);
+
+        // Cursos por categoría
         const byCategory = courses.reduce((acc: any, course: Course) => {
           const id = course.category?.idCategory;
           if (id) acc[id] = (acc[id] || 0) + 1;
@@ -109,6 +123,7 @@ const Dashboard: React.FC = () => {
           return { name: cat?.name || `Categoría ${catId}`, value: count };
         });
 
+        // Cursos por nivel
         const byLevel = courses.reduce((acc: any, course: Course) => {
           const name = course.level?.name;
           if (name) acc[name] = (acc[name] || 0) + 1;
@@ -116,6 +131,7 @@ const Dashboard: React.FC = () => {
         }, {});
         const levelFormatted = Object.entries(byLevel).map(([name, count]: any) => ({ name, cantidad: count }));
 
+        // Cursos por mes
         const monthly: any = {};
         courses.forEach((course: Course) => {
           const month = new Date(course.uploadDate).toLocaleDateString('es-PE', { month: 'short', year: 'numeric' });
@@ -148,7 +164,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Botón alineado a la derecha */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
         <button
           onClick={downloadSalesReport}
@@ -172,19 +187,49 @@ const Dashboard: React.FC = () => {
       </Box>
 
       <Box id="dashboard-pdf" sx={{ p: 2, backgroundColor: 'white' }}>
+        {/* Tarjetas */}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'space-between' }}>
-          <StatCard title="Usuarios" value={stats.totalUsers} icon={<People />} color="#1976d2" loading={loading} />
-          <StatCard title="Cursos" value={stats.totalCourses} icon={<School />} color="#2e7d32" loading={loading} />
-          <StatCard title="Lecciones" value={stats.totalLessons} icon={<Book />} color="#ed6c02" loading={loading} />
-          <StatCard title="Módulos" value={stats.totalModules} icon={<ViewModule />} color="#9c27b0" loading={loading} />
-          <StatCard title="Categorías" value={stats.totalCategories} icon={<CategoryIcon />} color="#ff7043" loading={loading} />
+          <Box sx={{ cursor: 'pointer' }} onClick={() => navigate('/users')}>
+            <StatCard title="Usuarios" value={stats.totalUsers} icon={<People />} color="#1976d2" loading={loading} />
+          </Box>
+          <Box sx={{ cursor: 'pointer' }} onClick={() => navigate('/courses')}>
+            <StatCard title="Cursos" value={stats.totalCourses} icon={<School />} color="#2e7d32" loading={loading} />
+          </Box>
+          <Box sx={{ cursor: 'pointer' }} onClick={() => navigate('/lessons')}>
+            <StatCard title="Lecciones" value={stats.totalLessons} icon={<Book />} color="#ed6c02" loading={loading} />
+          </Box>
+          <Box sx={{ cursor: 'pointer' }} onClick={() => navigate('/modules')}>
+            <StatCard title="Módulos" value={stats.totalModules} icon={<ViewModule />} color="#9c27b0" loading={loading} />
+          </Box>
+          <Box sx={{ cursor: 'pointer' }} onClick={() => navigate('/categories')}>
+            <StatCard title="Categorías" value={stats.totalCategories} icon={<CategoryIcon />} color="#ff7043" loading={loading} />
+          </Box>
+        </Box>
+
+        {/* Últimos usuarios */}
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" gutterBottom>Últimos usuarios registrados hoy</Typography>
+          {recentUsers.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">No se han registrado usuarios hoy.</Typography>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {recentUsers.map((user, i) => (
+                <Card key={i} variant="outlined" sx={{ p: 2 }}>
+                  <Typography variant="subtitle1">{user.name} {user.lastName}</Typography>
+                  <Typography variant="body2" color="text.secondary">{user.email}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Registrado a las {new Date(user.registerDate).toLocaleTimeString('es-PE')}
+                  </Typography>
+                </Card>
+              ))}
+            </Box>
+          )}
         </Box>
 
         {/* Gráficos */}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: 4, gap: 4 }}>
-          {/* Fila 1 */}
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', width: '100%', gap: 4 }}>
-            <Card sx={{ flex: 1, minWidth: 300 }}>
+          <Box sx={{ flex: 1, minWidth: 300 }}>
+            <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>Cursos por Categoría</Typography>
                 <ResponsiveContainer width="100%" height={250}>
@@ -201,9 +246,8 @@ const Dashboard: React.FC = () => {
             </Card>
           </Box>
 
-          {/* Fila 2 */}
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', width: '100%', gap: 4 }}>
-            <Card sx={{ flex: 1, minWidth: 300 }}>
+          <Box sx={{ flex: 1, minWidth: 300 }}>
+            <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>Cursos por Nivel</Typography>
                 <ResponsiveContainer width="100%" height={250}>
@@ -218,7 +262,6 @@ const Dashboard: React.FC = () => {
             </Card>
           </Box>
 
-          {/* Fila 3 */}
           <Box sx={{ width: '100%' }}>
             <Card>
               <CardContent>

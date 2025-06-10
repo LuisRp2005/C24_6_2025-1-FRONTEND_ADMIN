@@ -29,6 +29,7 @@ import {
   ViewModule as ModulesIcon,
   LightMode,
   DarkMode,
+  People as UsersIcon 
 } from '@mui/icons-material';
 import API from '../../services/api';
 import { useThemeToggle } from '../../theme/ThemeContext';
@@ -69,6 +70,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/home' },
+    { text: 'Usuarios', icon: <UsersIcon />, path: '/users' },
     { text: 'Cursos', icon: <SchoolIcon />, path: '/courses' },
     { text: 'Modulos', icon: <ModulesIcon />, path: '/modules' },
     { text: 'Lecciones', icon: <MenuBookIcon />, path: '/lessons' },

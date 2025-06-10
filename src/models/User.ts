@@ -3,7 +3,8 @@ import { Role } from './Role';
 export enum StatusUserEnum {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
-  SUSPENDED = "SUSPENDED",
+  BLOCK = "BLOCK",
+  PENDING = "PENDING",
 }
 
 export interface User {
@@ -24,6 +25,6 @@ export interface User {
   codeVerification?: string;
   verificationCodeExpiration?: string; // ISO Date string
   isVisible: boolean;
-  role: Role;
+  role: string;
   fullName: string;
 }

@@ -18,6 +18,7 @@ import EditNotification from './pages/notification/EditNotification';
 import Module from './pages/modules/Modules';
 import CreateModule from './pages/modules/CreateModule';
 import EditModule from './pages/modules/EditModule';
+import Users from './pages/users/Users';
 
 function App() {
   return (
@@ -133,6 +134,13 @@ function App() {
           <ProtectedRoute>
             <MainLayout>
               <EditModule />
+            </MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/users" element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Users />
             </MainLayout>
           </ProtectedRoute>
         } />

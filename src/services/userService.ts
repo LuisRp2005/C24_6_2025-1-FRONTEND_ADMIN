@@ -31,3 +31,10 @@ export const getCurrentUserIdAndRole = () => {
 export const getUsers = () => {
   return API.get<User[]>('/users');
 };
+
+
+export const blockUser = (email: string) =>
+  API.put(`/users/block/${email}`);
+
+export const unblockUser = (email: string) =>
+  API.put(`/users/unblock/${email}`);
